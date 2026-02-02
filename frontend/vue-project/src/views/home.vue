@@ -1,8 +1,22 @@
 <template>
     <v-app>
-        <v-app-bar class="position-sticky" color="#1E1E1E">
+        <v-app-bar class="app-bar position-sticky" color="#1E1E1E">
             <v-app-bar-nav-icon variant="text" @click.stop="drawer = !drawer"></v-app-bar-nav-icon>
-            <v-app-bar-title class="text-h4 font-weight-bold">SEEKINO</v-app-bar-title>
+            <v-img height="60" src="/img/logo_seekino.png" style="filter: invert(1);" class="logo"></v-img>
+            <v-spacer/>
+            <v-spacer/>
+            <div class="search-center">
+                <v-text-field
+                v-model="search"
+                placeholder="Meklēt filmas..."
+                prepend-inner-icon="mdi-magnify"
+                density="compact"
+                variant="solo-filled"
+                hide-details
+                style="width: 350px;"
+                />
+            </div>
+            <v-spacer/>
             <v-btn style="background-color:#E50914; color:white" class="register-btn">Reģistrēties</v-btn>
         </v-app-bar>
             
@@ -14,10 +28,12 @@
             color="#1E1E1E"
             class="position-fixed">
             <v-list nav>
+                <v-list-item link>Sākums</v-list-item>
                 <v-list-item link>Filmas</v-list-item>
-                <v-list-item link>Biļetes</v-list-item>
-                <v-list-item link>Navigation3</v-list-item>
-                <v-list-item link>Navigation4</v-list-item>
+                <v-list-item link>Seansi</v-list-item>
+                <v-list-item link>Biļešu rezervēšana</v-list-item>
+                <v-list-item link>Kinoteātris</v-list-item>
+                <v-list-item link>Kontakti</v-list-item>
             </v-list>
         </v-navigation-drawer>
 

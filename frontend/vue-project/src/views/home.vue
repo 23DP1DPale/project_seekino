@@ -29,6 +29,7 @@
                     rounded="xl"
                     class="text-none login-btn"
                     prepend-icon="mdi-account-circle-outline"
+                    @click="openAuth('login')"
                 >
                     Pieslēgties
                 </v-btn>
@@ -66,6 +67,114 @@
                 />
             </v-list>
         </v-navigation-drawer>
+
+        <v-dialog v-model="authDialog" max-width="500">
+            <v-card class="auth-dialog-card rounded-xl">
+                <v-card-title class="d-flex align-center justify-space-between">
+                    <span>{{ authMode === 'login' ? 'Pieslēgties kontam' : 'Izveidot kontu' }}</span>
+                    <v-btn icon="mdi-close" variant="text" @click="closeAuth" />
+                </v-card-title>
+
+                <v-card-text class="pt-2">
+                    <v-alert
+                        v-if="authError"
+                        type="error"
+                        density="comfortable"
+                        variant="tonal"
+                        class="mb-3"
+                    >
+                        {{ authError }}
+                    </v-alert>
+
+                    <v-alert
+                        v-if="authSuccess"
+                        type="success"
+                        density="comfortable"
+                        variant="tonal"
+                        class="mb-3"
+                    >
+                        {{ authSuccess }}
+                    </v-alert>
+
+                    <v-form @submit.prevent="submitAuth">
+                        <transition name="auth-switch" mode="out-in">
+                            <div :key="authMode">
+                                <template v-if="authMode === 'login'">
+                                    <v-text-field
+                                        v-model="loginForm.email"
+                                        label="E-pasts"
+                                        type="email"
+                                        variant="outlined"
+                                        prepend-inner-icon="mdi-email-outline"
+                                        class="mb-3"
+                                    />
+                                    <v-text-field
+                                        v-model="loginForm.password"
+                                        label="Parole"
+                                        type="password"
+                                        variant="outlined"
+                                        prepend-inner-icon="mdi-lock-outline"
+                                        class="mb-2"
+                                    />
+                                </template>
+
+                                <template v-else>
+                                    <v-text-field
+                                        v-model="registerForm.name"
+                                        label="Vārds"
+                                        variant="outlined"
+                                        prepend-inner-icon="mdi-account-outline"
+                                        class="mb-3"
+                                    />
+                                    <v-text-field
+                                        v-model="registerForm.email"
+                                        label="E-pasts"
+                                        type="email"
+                                        variant="outlined"
+                                        prepend-inner-icon="mdi-email-outline"
+                                        class="mb-3"
+                                    />
+                                    <v-text-field
+                                        v-model="registerForm.password"
+                                        label="Parole"
+                                        type="password"
+                                        variant="outlined"
+                                        prepend-inner-icon="mdi-lock-outline"
+                                        class="mb-3"
+                                    />
+                                    <v-text-field
+                                        v-model="registerForm.confirmPassword"
+                                        label="Atkārto paroli"
+                                        type="password"
+                                        variant="outlined"
+                                        prepend-inner-icon="mdi-lock-check-outline"
+                                        class="mb-2"
+                                    />
+                                </template>
+                            </div>
+                        </transition>
+
+                        <v-btn
+                            type="submit"
+                            color="#E50914"
+                            block
+                            rounded="lg"
+                            class="text-none mt-2"
+                            :loading="authLoading"
+                        >
+                            {{ authMode === 'login' ? 'Pieslēgties' : 'Izveidot kontu' }}
+                        </v-btn>
+                    </v-form>
+
+                    <p class="text-caption mt-4 mb-0">
+                        {{ authMode === 'login' ? 'Nav konta?' : 'Jau ir konts?' }}
+                        <a href="#" class="auth-switch-link" @click.prevent="switchAuth(authMode === 'login' ? 'register' : 'login')">
+                            {{ authMode === 'login' ? 'Reģistrējies' : 'Pieslēdzies' }}
+                        </a>
+                    </p>
+                </v-card-text>
+            </v-card>
+        </v-dialog>
 
         <v-main class="main-content">
             <section class="hero-section">
@@ -303,6 +412,13 @@ const selectedGenre = ref('Visi')
 const selectedAge = ref('Visi')
 const sortBy = ref('Reitings')
 const priceRange = ref([6, 25])
+const authDialog = ref(false)
+const authMode = ref('login')
+const authLoading = ref(false)
+const authError = ref('')
+const authSuccess = ref('')
+const loginForm = ref({ email: '', password: '' })
+const registerForm = ref({ name: '', email: '', password: '', confirmPassword: '' })
 const menuItems = [
     { title: 'Sākums', icon: 'mdi-home-variant-outline', to: '/' },
     { title: 'Filmas', icon: 'mdi-movie-open-outline', to: '/filmas' },
@@ -430,6 +546,72 @@ const filteredMovies = computed(() => {
 
 const displayedMovies = computed(() => filteredMovies.value.slice(0, 6))
 const featuredShows = computed(() => upcomingShows.value.slice(0, 4))
+
+const isEmailValid = (value) => /^\S+@\S+\.\S+$/.test(value)
+
+const openAuth = (mode = 'login') => {
+    authMode.value = mode
+    authDialog.value = true
+    authError.value = ''
+    authSuccess.value = ''
+}
+
+const closeAuth = () => {
+    authDialog.value = false
+    authLoading.value = false
+}
+
+const switchAuth = (mode) => {
+    authMode.value = mode
+    authError.value = ''
+    authSuccess.value = ''
+}
+
+const submitAuth = async () => {
+    authError.value = ''
+    authSuccess.value = ''
+
+    if (authMode.value === 'login') {
+        if (!loginForm.value.email || !loginForm.value.password) {
+            authError.value = 'Lūdzu aizpildi e-pastu un paroli.'
+            return
+        }
+        if (!isEmailValid(loginForm.value.email)) {
+            authError.value = 'E-pasta adrese nav pareiza.'
+            return
+        }
+    } else {
+        if (
+            !registerForm.value.name ||
+            !registerForm.value.email ||
+            !registerForm.value.password ||
+            !registerForm.value.confirmPassword
+        ) {
+            authError.value = 'Lūdzu aizpildi visus reģistrācijas laukus.'
+            return
+        }
+        if (!isEmailValid(registerForm.value.email)) {
+            authError.value = 'E-pasta adrese nav pareiza.'
+            return
+        }
+        if (registerForm.value.password.length < 6) {
+            authError.value = 'Parolei jābūt vismaz 6 simbolus garai.'
+            return
+        }
+        if (registerForm.value.password !== registerForm.value.confirmPassword) {
+            authError.value = 'Paroles nesakrīt.'
+            return
+        }
+    }
+
+    authLoading.value = true
+    await new Promise((resolve) => setTimeout(resolve, 500))
+    authLoading.value = false
+    authSuccess.value =
+        authMode.value === 'login'
+            ? 'Pieslēgšanās forma gatava. Nākamais solis: savienot ar Laravel API.'
+            : 'Reģistrācijas forma gatava. Nākamais solis: savienot ar Laravel API.'
+}
 </script>
 
 <style scoped>
@@ -500,6 +682,56 @@ const featuredShows = computed(() => upcomingShows.value.slice(0, 4))
     transform: translateY(-1px);
     box-shadow: 0 5px 28px rgba(229, 9, 20, 0.5);
     filter: brightness(1.07);
+}
+
+.auth-dialog-card {
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: linear-gradient(165deg, #121724, #10131c);
+    color: #edf2ff;
+}
+
+.auth-dialog-card :deep(.v-field),
+.auth-dialog-card :deep(.v-label),
+.auth-dialog-card :deep(.v-field__input),
+.auth-dialog-card :deep(.v-icon) {
+    color: #edf2ff;
+}
+
+.auth-dialog-card :deep(.v-card-title),
+.auth-dialog-card :deep(.v-card-text),
+.auth-dialog-card :deep(.v-btn),
+.auth-dialog-card :deep(.v-alert__content),
+.auth-dialog-card :deep(.text-caption) {
+    color: #edf2ff;
+}
+
+.auth-dialog-card :deep(.v-label.v-field-label) {
+    opacity: 0.85;
+}
+
+.auth-switch-link {
+    color: #ff5a44;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.auth-switch-link:hover {
+    text-decoration: underline;
+}
+
+.auth-switch-enter-active,
+.auth-switch-leave-active {
+    transition: opacity 0.24s ease, transform 0.24s ease;
+}
+
+.auth-switch-enter-from {
+    opacity: 0;
+    transform: translateY(8px);
+}
+
+.auth-switch-leave-to {
+    opacity: 0;
+    transform: translateY(-8px);
 }
 
 .hero-section {

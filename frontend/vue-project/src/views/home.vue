@@ -11,12 +11,14 @@
             <v-container class="d-flex align-center px-2 px-md-6 app-bar-inner">
                 <v-app-bar-nav-icon class="nav-btn mr-1" variant="text" @click.stop="drawer = !drawer" />
 
-                <v-img
-                    src="/img/logo_seekino.png"
-                    max-width="160"
-                    height="52"
-                    class="ml-2 logo"
-                />
+                <RouterLink to="/" class="brand-link ml-2">
+                    <v-img
+                        src="/img/logo_seekino.png"
+                        width="160"
+                        height="52"
+                        class="logo brand-logo"
+                    />
+                </RouterLink>
 
                 <v-spacer />
 
@@ -186,7 +188,7 @@
                             Vienuviet pieejami seansi, sēdvietu izvēle, žanru un cenu filtri, kā arī lietotāju vērtējumi.
                         </p>
                         <div class="d-flex flex-wrap ga-3">
-                            <v-btn color="#E50914" size="large" rounded="lg" class="text-none">Sākt rezervāciju</v-btn>
+                            <v-btn color="#E50914" size="large" rounded="lg" class="text-none">Apskatīt seansus</v-btn>
                         </div>
                     </div>
                 </v-container>
@@ -194,6 +196,13 @@
 
             <v-container class="py-8">
                 <v-card class="filter-card pa-4 pa-md-6 rounded-xl mb-8" color="#151821">
+                    <div class="d-flex align-center justify-space-between flex-wrap ga-3 mb-4">
+                        <div>
+                            <p class="text-overline filter-kicker mb-1">Atlase</p>
+                            <h2 class="section-title mb-0">{{ filteredMovies.length }} filmas</h2>
+                        </div>
+                    </div>
+
                     <v-row>
                         <v-col cols="12" md="4">
                             <v-text-field
@@ -244,14 +253,27 @@
                             />
                         </v-col>
                     </v-row>
+
+                    <div v-if="activeFilters.length" class="active-filters mt-4">
+                        <v-chip
+                            v-for="filter in activeFilters"
+                            :key="filter.key"
+                            size="small"
+                            closable
+                            variant="outlined"
+                            class="active-filter-chip"
+                            @click:close="removeFilter(filter.key)"
+                        >
+                            {{ filter.label }}
+                        </v-chip>
+                    </div>
                 </v-card>
 
-                <div class="d-flex align-center justify-space-between mb-4">
+                <div class="d-flex align-center justify-space-between mb-4 flex-wrap ga-3">
                     <h2 class="section-title">Populārākās filmas</h2>
-                    <v-chip color="#E50914" variant="flat">{{ filteredMovies.length }} atrastas</v-chip>
                 </div>
 
-                <v-row>
+                <v-row v-if="displayedMovies.length">
                     <v-col
                         v-for="movie in displayedMovies"
                         :key="movie.id"
@@ -259,9 +281,9 @@
                         sm="6"
                         lg="4"
                     >
-                        <v-card class="movie-card h-100 rounded-xl">
-                            <v-img :src="movie.poster" height="230" cover />
-                            <v-card-text>
+                            <v-card class="movie-card h-100 rounded-xl">
+                                <v-img :src="movie.poster" height="230" cover />
+                                <v-card-text>
                                 <div class="d-flex justify-space-between align-center mb-2">
                                     <h3 class="movie-title">{{ movie.title }}</h3>
                                     <v-chip size="small" prepend-icon="mdi-cash" class="movie-price-chip">
@@ -282,7 +304,6 @@
                                     density="compact"
                                     color="#FFD166"
                                 />
-                                <p class="mt-2 text-body-2">{{ movie.description }}</p>
                             </v-card-text>
                             <v-card-actions class="px-4 pb-4">
                                 <v-btn
@@ -298,6 +319,28 @@
                         </v-card>
                     </v-col>
                 </v-row>
+
+                <v-card
+                    v-else
+                    class="empty-state-card rounded-xl pa-6 pa-md-8 text-center"
+                >
+                    <div class="empty-state-icon mb-4">
+                        <v-icon size="34">mdi-movie-search-outline</v-icon>
+                    </div>
+                    <h3 class="empty-state-title mb-2">Nav atrastu filmu</h3>
+                    <p class="empty-state-copy mb-5">
+                        Pamēģini notīrīt filtrus vai paplašini cenu diapazonu, lai redzētu visu repertuāru.
+                    </p>
+                    <v-btn
+                        color="#E50914"
+                        rounded="lg"
+                        class="text-none"
+                        prepend-icon="mdi-refresh"
+                        @click="resetFilters"
+                    >
+                        Notīrīt filtrus
+                    </v-btn>
+                </v-card>
 
                 <div class="mt-10">
                     <div class="d-flex align-center justify-space-between mb-4 flex-wrap ga-3">
@@ -405,6 +448,7 @@
 
 <script setup>
 import { computed, ref } from 'vue'
+import { RouterLink } from 'vue-router'
 
 const drawer = ref(false)
 const searchQuery = ref('')
@@ -423,7 +467,6 @@ const menuItems = [
     { title: 'Sākums', icon: 'mdi-home-variant-outline', to: '/' },
     { title: 'Filmas', icon: 'mdi-movie-open-outline', to: '/filmas' },
     { title: 'Seansi', icon: 'mdi-calendar-clock-outline', to: '/seansi' },
-    { title: 'Biļešu rezervēšana', icon: 'mdi-ticket-confirmation-outline', to: '' },
     { title: 'Kontakti', icon: 'mdi-phone-outline', to: '/kontakti' },
 ]
 const footerNavLinks = [
@@ -546,6 +589,30 @@ const filteredMovies = computed(() => {
 
 const displayedMovies = computed(() => filteredMovies.value.slice(0, 6))
 const featuredShows = computed(() => upcomingShows.value.slice(0, 4))
+const resultsLabel = computed(() =>
+    filteredMovies.value.length === 1 ? '1 filma atlasē' : `${filteredMovies.value.length} filmas atlasē`
+)
+const activeFilters = computed(() => {
+    const filters = []
+
+    if (searchQuery.value.trim()) {
+        filters.push({ key: 'search', label: `Meklejums: ${searchQuery.value.trim()}` })
+    }
+    if (selectedGenre.value !== 'Visi') {
+        filters.push({ key: 'genre', label: selectedGenre.value })
+    }
+    if (selectedAge.value !== 'Visi') {
+        filters.push({ key: 'age', label: selectedAge.value })
+    }
+    if (sortBy.value !== 'Reitings') {
+        filters.push({ key: 'sort', label: `Kartot: ${sortBy.value}` })
+    }
+    if (priceRange.value[0] !== 6 || priceRange.value[1] !== 25) {
+        filters.push({ key: 'price', label: `Cena: ${priceRange.value[0]}-${priceRange.value[1]} EUR` })
+    }
+
+    return filters
+})
 
 const isEmailValid = (value) => /^\S+@\S+\.\S+$/.test(value)
 
@@ -612,6 +679,22 @@ const submitAuth = async () => {
             ? 'Pieslēgšanās forma gatava. Nākamais solis: savienot ar Laravel API.'
             : 'Reģistrācijas forma gatava. Nākamais solis: savienot ar Laravel API.'
 }
+
+const resetFilters = () => {
+    searchQuery.value = ''
+    selectedGenre.value = 'Visi'
+    selectedAge.value = 'Visi'
+    sortBy.value = 'Reitings'
+    priceRange.value = [6, 25]
+}
+
+const removeFilter = (key) => {
+    if (key === 'search') searchQuery.value = ''
+    if (key === 'genre') selectedGenre.value = 'Visi'
+    if (key === 'age') selectedAge.value = 'Visi'
+    if (key === 'sort') sortBy.value = 'Reitings'
+    if (key === 'price') priceRange.value = [6, 25]
+}
 </script>
 
 <style scoped>
@@ -645,6 +728,25 @@ const submitAuth = async () => {
 
 .logo {
     filter: invert(1);
+}
+
+.brand-link {
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none;
+    width: 160px;
+    min-width: 160px;
+    transition: opacity 0.16s ease, transform 0.16s ease;
+}
+
+.brand-link:hover {
+    opacity: 0.92;
+    transform: translateY(-1px);
+}
+
+.brand-logo {
+    width: 160px;
+    flex: 0 0 160px;
 }
 
 .nav-btn {
@@ -816,9 +918,21 @@ const submitAuth = async () => {
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+.filter-kicker {
+    color: #9aa5be;
+    letter-spacing: 0.08em;
+}
+
 .movie-card {
     border: 1px solid rgba(255, 255, 255, 0.09);
     background: linear-gradient(180deg, #141926, #0f131d);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.movie-card:hover {
+    transform: translateY(-6px) scale(1.01);
+    box-shadow: 0 18px 36px rgba(0, 0, 0, 0.28);
+    border-color: rgba(255, 255, 255, 0.18);
 }
 
 .movie-title {
@@ -828,6 +942,11 @@ const submitAuth = async () => {
 
 .movie-meta {
     color: #ffffff;
+}
+
+.movie-description {
+    color: #c1c7d8;
+    line-height: 1.55;
 }
 
 .movie-price-chip {
@@ -856,6 +975,11 @@ const submitAuth = async () => {
     transform: translateY(-1px);
     box-shadow: 0 14px 28px rgba(229, 9, 20, 0.5);
     filter: brightness(1.08);
+}
+
+.movie-card:hover .reserve-btn {
+    box-shadow: 0 16px 30px rgba(229, 9, 20, 0.58);
+    filter: brightness(1.1);
 }
 
 .drawer-list :deep(.v-list-item-title) {
@@ -907,6 +1031,27 @@ const submitAuth = async () => {
 
 .filter-card :deep(.v-label.v-field-label) {
     opacity: 0.85;
+}
+
+.active-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.active-filter-chip {
+    color: #d7dff2;
+    border-color: rgba(255, 255, 255, 0.22);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.results-chip {
+    font-weight: 700;
+}
+
+.results-copy {
+    color: #a9b4cb;
+    font-size: 0.94rem;
 }
 
 .movie-card :deep(.v-card-text),
@@ -982,5 +1127,32 @@ const submitAuth = async () => {
     background: rgba(6, 8, 12, 0.7);
     color: #9ea8bf;
     font-size: 0.82rem;
+}
+
+.empty-state-card {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: linear-gradient(180deg, #141926, #0f131d);
+}
+
+.empty-state-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 76px;
+    height: 76px;
+    border-radius: 50%;
+    background: rgba(229, 9, 20, 0.12);
+    color: #ff7a70;
+}
+
+.empty-state-title {
+    color: #ffffff;
+    font-size: 1.35rem;
+}
+
+.empty-state-copy {
+    max-width: 44ch;
+    margin-inline: auto;
+    color: #b6bfd4;
 }
 </style>

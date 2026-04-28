@@ -41,32 +41,39 @@
         <v-navigation-drawer
             v-model="drawer"
             temporary
+            scrim="rgba(0, 0, 0, 0.82)"
             color="#101114"
             location="left"
             width="320"
             class="position-fixed app-drawer"
         >
-            <div class="drawer-header pa-4">
-                <p class="drawer-kicker mb-1">SEEKINO MENU</p>
-                <h3 class="drawer-title mb-1">Laipni lūgts kinoteātrī</h3>
-                <p class="drawer-subtitle mb-0">Ātra piekļuve filmām, seansiem un rezervācijām.</p>
+            <div class="drawer-header px-4 py-5">
+                <v-btn icon="mdi-close" variant="text" size="small" class="drawer-close-btn" @click="drawer = false" />
             </div>
 
             <v-divider />
 
-            <p class="drawer-section-label px-4 pt-4 pb-2">Navigācija</p>
-            <v-list nav class="drawer-list px-2">
-                <v-list-item
-                    v-for="item in menuItems"
-                    :key="item.title"
-                    :to="item.to"
-                    :prepend-icon="item.icon"
-                    :title="item.title"
-                    link
-                    rounded="lg"
-                    class="mb-1"
-                    @click="drawer = false"
-                />
+            <v-list nav class="drawer-list px-3 py-4">
+                <template v-for="group in menuGroups" :key="group.title">
+                    <v-list-subheader class="drawer-group-label px-2">
+                        {{ group.title }}
+                    </v-list-subheader>
+                    <v-list-item
+                        v-for="item in group.items"
+                        :key="item.title"
+                        :to="item.to || undefined"
+                        :prepend-icon="item.icon"
+                        :title="item.title"
+                        link
+                        rounded="lg"
+                        class="drawer-list-item"
+                        @click="drawer = false"
+                    />
+                    <v-divider
+                        v-if="!group.isLast"
+                        class="drawer-group-divider my-4"
+                    />
+                </template>
             </v-list>
         </v-navigation-drawer>
 
@@ -180,50 +187,20 @@
 
         <v-main class="main-content">
             <section class="hero-section">
-                <v-container class="py-14 py-md-16">
-                    <div class="hero-panel pa-6 pa-md-10">
+                <v-container class="py-8 py-md-10">
+                    <div class="hero-panel pa-5 pa-md-7">
                         <v-row align="center">
-                            <v-col cols="12" md="7">
+                            <v-col cols="12" md="12">
                                 <p class="hero-badge">SEEKINO filmu katalogs</p>
-                                <h1 class="hero-title mb-3">Atrodi savu nākamo kino vakaru vienā skatā</h1>
-                                <p class="hero-subtitle mb-6">
-                                    Izvēlies filmas pēc žanra, salīdzini vērtējumus un atrodi sev piemērotāko kino
-                                    vakaru vienotā SEEKINO stilā.
+                                <h1 class="hero-title mb-3">Atrodi filmu un uzreiz pārej uz seansiem</h1>
+                                <p class="hero-subtitle mb-4">
+                                    Pārlūko repertuāru, salīdzini vērtējumus un izvēlies sev piemērotāko filmu.
                                 </p>
                                 <div class="d-flex flex-wrap ga-3">
                                     <v-btn color="#E50914" size="large" rounded="lg" class="text-none" to="/seansi">
                                         Skatīt seansus
                                     </v-btn>
                                 </div>
-                            </v-col>
-
-                            <v-col cols="12" md="5">
-                                <v-card class="movie-card hero-feature-card rounded-xl">
-                                    <v-img :src="featuredMovie.poster" height="240" cover />
-                                    <v-card-text>
-                                        <div class="d-flex justify-space-between align-center mb-2">
-                                            <h3 class="movie-title">{{ featuredMovie.title }}</h3>
-                                            <v-chip size="small" class="movie-price-chip">
-                                                no {{ featuredMovie.price }} EUR
-                                            </v-chip>
-                                        </div>
-                                        <p class="text-caption movie-meta mb-2">
-                                            {{ featuredMovie.director }} | {{ featuredMovie.duration }} min
-                                        </p>
-                                        <div class="d-flex flex-wrap ga-2 mb-3">
-                                            <v-chip size="small" variant="outlined">{{ featuredMovie.genre }}</v-chip>
-                                            <v-chip size="small" variant="outlined">{{ featuredMovie.ageRating }}</v-chip>
-                                        </div>
-                                        <v-rating
-                                            :model-value="featuredMovie.rating"
-                                            half-increments
-                                            readonly
-                                            density="compact"
-                                            color="#FFD166"
-                                        />
-                                        <p class="mt-3 text-body-2">{{ featuredMovie.description }}</p>
-                                    </v-card-text>
-                                </v-card>
                             </v-col>
                         </v-row>
                     </div>
@@ -267,18 +244,6 @@
                                 hide-details
                             />
                         </v-col>
-                        <v-col cols="12" md="2" class="d-flex align-center">
-                            <v-btn
-                                block
-                                variant="outlined"
-                                rounded="lg"
-                                class="text-none reset-filters-btn"
-                                prepend-icon="mdi-refresh"
-                                @click="resetFilters"
-                            >
-                                Notīrīt
-                            </v-btn>
-                        </v-col>
                     </v-row>
 
                     <div v-if="activeFilters.length" class="active-filters mt-4">
@@ -293,6 +258,14 @@
                         >
                             {{ filter.label }}
                         </v-chip>
+                        <v-btn
+                            variant="text"
+                            rounded="pill"
+                            class="text-none reset-filters-inline"
+                            @click="resetFilters"
+                        >
+                            Notīrīt filtrus
+                        </v-btn>
                     </div>
                 </v-card>
 
@@ -461,11 +434,24 @@ const authSuccess = ref('')
 const loginForm = ref({ email: '', password: '' })
 const registerForm = ref({ name: '', email: '', password: '', confirmPassword: '' })
 
-const menuItems = [
-    { title: 'Sākums', icon: 'mdi-home-variant-outline', to: '/' },
-    { title: 'Filmas', icon: 'mdi-movie-open-outline', to: '/filmas' },
-    { title: 'Seansi', icon: 'mdi-calendar-clock-outline', to: '/seansi' },
-    { title: 'Kontakti', icon: 'mdi-phone-outline', to: '/kontakti' },
+const menuGroups = [
+    {
+        title: 'Kino',
+        items: [
+            { title: 'Sākums', icon: 'mdi-home-variant-outline', to: '/' },
+            { title: 'Filmas', icon: 'mdi-movie-open-outline', to: '/filmas' },
+            { title: 'Seansi', icon: 'mdi-calendar-clock-outline', to: '/seansi' },
+        ],
+    },
+    {
+        title: 'Lietotājs',
+        isLast: true,
+        items: [
+            { title: 'Mans profils', icon: 'mdi-account-outline', to: '/profils' },
+            { title: 'Manas rezervācijas', icon: 'mdi-ticket-confirmation-outline', to: '/rezervacijas' },
+            { title: 'Kontakti', icon: 'mdi-phone-outline', to: '/kontakti' },
+        ],
+    },
 ]
 
 const footerNavLinks = [
@@ -498,7 +484,7 @@ const movies = ref([
         id: 2,
         title: 'Orbīta 9',
         director: 'Jānis Ozols',
-        genre: 'Sci-Fi',
+        genre: 'Zinātniskā fantastika',
         duration: 134,
         ageRating: '13+',
         language: 'EN subtitri',
@@ -706,6 +692,13 @@ const removeFilter = (key) => {
     color: #f4f6fb;
 }
 
+.hero-panel,
+.filter-card,
+.movie-card,
+.empty-state-card {
+    animation: subtle-fade-in 0.42s ease both;
+}
+
 .sticky-app-bar {
     position: sticky !important;
     top: 0;
@@ -756,13 +749,16 @@ const removeFilter = (key) => {
 .nav-link-btn {
     color: #d7dff2;
     border: 1px solid transparent;
-    transition: color 0.16s ease, background-color 0.16s ease, border-color 0.16s ease;
+    transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease,
+        box-shadow 0.2s ease;
 }
 
 .nav-link-btn:hover {
     color: #ffffff;
     background: rgba(255, 255, 255, 0.08);
     border-color: rgba(255, 255, 255, 0.16);
+    transform: scale(1.03);
+    box-shadow: 0 0 18px rgba(76, 114, 255, 0.12);
 }
 
 .login-btn {
@@ -772,7 +768,7 @@ const removeFilter = (key) => {
     letter-spacing: 0.01em;
     box-shadow: 0 5px 26px rgba(229, 9, 20, 0.38);
     border: 1px solid rgba(255, 255, 255, 0.24);
-    transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
 }
 
 .login-btn :deep(.v-btn__content),
@@ -781,8 +777,8 @@ const removeFilter = (key) => {
 }
 
 .login-btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 5px 28px rgba(229, 9, 20, 0.5);
+    transform: scale(1.03);
+    box-shadow: 0 8px 30px rgba(229, 9, 20, 0.5), 0 0 24px rgba(108, 132, 255, 0.14);
     filter: brightness(1.07);
 }
 
@@ -906,7 +902,7 @@ const removeFilter = (key) => {
 
 .hero-subtitle {
     max-width: 64ch;
-    color: #c1c7d8;
+    color: #d2d9e7;
 }
 
 .hero-chip {
@@ -925,10 +921,11 @@ const removeFilter = (key) => {
 
 .filter-card {
     border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 14px 34px rgba(4, 7, 12, 0.22);
 }
 
 .filter-kicker {
-    color: #9aa5be;
+    color: #acb7cf;
     letter-spacing: 0.08em;
 }
 
@@ -944,21 +941,53 @@ const removeFilter = (key) => {
     opacity: 0.85;
 }
 
-.reset-filters-btn {
-    color: #f4f6fb;
-    border-color: rgba(255, 255, 255, 0.2);
-}
-
 .active-filters {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
+    align-items: center;
 }
 
 .active-filter-chip {
     color: #d7dff2;
     border-color: rgba(255, 255, 255, 0.22);
     background: rgba(255, 255, 255, 0.04);
+    transition: transform 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.active-filter-chip:hover {
+    transform: translateY(-1px);
+    border-color: rgba(255, 255, 255, 0.32);
+    background: rgba(255, 255, 255, 0.07);
+}
+
+.reset-filters-inline {
+    min-height: 28px;
+    padding-inline: 2px;
+    color: #ff5a44;
+    font-size: 0.84rem;
+    font-weight: 700;
+    line-height: 1;
+    opacity: 0.94;
+    transition: color 0.2s ease, opacity 0.2s ease, transform 0.2s ease, filter 0.2s ease;
+}
+
+.reset-filters-inline:hover {
+    transform: translateY(-1px);
+    color: #ff7a70;
+    opacity: 1;
+    filter: brightness(1.04);
+}
+
+.reset-filters-inline:deep(.v-btn__content),
+.reset-filters-inline:deep(.v-icon) {
+    color: inherit;
+    align-items: center;
+    line-height: 1;
+}
+
+.reset-filters-inline:deep(.v-btn__overlay) {
+    opacity: 0;
 }
 
 .results-chip {
@@ -966,14 +995,14 @@ const removeFilter = (key) => {
 }
 
 .results-copy {
-    color: #a9b4cb;
+    color: #bbc5d8;
     font-size: 0.94rem;
 }
 
 .movie-card {
     border: 1px solid rgba(255, 255, 255, 0.09);
     background: linear-gradient(180deg, #141926, #0f131d);
-    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, filter 0.2s ease;
 }
 
 .movie-card :deep(.v-card-text),
@@ -982,9 +1011,10 @@ const removeFilter = (key) => {
 }
 
 .movie-card:hover {
-    transform: translateY(-6px) scale(1.01);
-    box-shadow: 0 18px 36px rgba(0, 0, 0, 0.28);
+    transform: translateY(-8px);
+    box-shadow: 0 24px 42px rgba(0, 0, 0, 0.34);
     border-color: rgba(255, 255, 255, 0.18);
+    filter: brightness(1.02);
 }
 
 .movie-title {
@@ -993,7 +1023,7 @@ const removeFilter = (key) => {
 }
 
 .movie-meta {
-    color: #ffffff;
+    color: #d6def0;
 }
 
 .movie-price-chip {
@@ -1009,7 +1039,7 @@ const removeFilter = (key) => {
     justify-content: space-between;
     gap: 12px;
     font-size: 0.86rem;
-    color: #c1c7d8;
+    color: #d0d7e6;
 }
 
 .reserve-btn {
@@ -1018,7 +1048,7 @@ const removeFilter = (key) => {
     font-weight: 700;
     letter-spacing: 0.02em;
     box-shadow: 0 10px 24px rgba(229, 9, 20, 0.4);
-    transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
 }
 
 .reserve-btn :deep(.v-btn__content),
@@ -1027,13 +1057,13 @@ const removeFilter = (key) => {
 }
 
 .reserve-btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 14px 28px rgba(229, 9, 20, 0.5);
+    transform: scale(1.03);
+    box-shadow: 0 14px 28px rgba(229, 9, 20, 0.5), 0 0 24px rgba(91, 112, 255, 0.12);
     filter: brightness(1.08);
 }
 
 .movie-card:hover .reserve-btn {
-    box-shadow: 0 16px 30px rgba(229, 9, 20, 0.58);
+    box-shadow: 0 16px 30px rgba(229, 9, 20, 0.58), 0 0 28px rgba(91, 112, 255, 0.16);
     filter: brightness(1.1);
 }
 
@@ -1042,45 +1072,87 @@ const removeFilter = (key) => {
 }
 
 .app-drawer {
+    position: relative;
     border-right: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 18px 0 42px rgba(0, 0, 0, 0.36);
 }
 
 .drawer-header {
-    background: linear-gradient(160deg, rgba(36, 53, 88, 0.65), rgba(94, 27, 46, 0.45));
+    min-height: 72px;
+    background: rgba(255, 255, 255, 0.02);
 }
 
-.drawer-kicker {
-    color: #d9e3ff;
-    letter-spacing: 1px;
+.drawer-group-label {
+    min-height: 28px;
+    color: #8994ac;
     font-size: 0.72rem;
-}
-
-.drawer-title {
-    color: #ffffff;
-    font-size: 1rem;
-}
-
-.drawer-subtitle {
-    color: #c1c7d8;
-    font-size: 0.82rem;
-}
-
-.drawer-section-label {
-    color: #9aa5be;
-    font-size: 0.75rem;
+    font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
 }
 
+.drawer-group-divider {
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
 .drawer-list :deep(.v-list-item) {
     min-height: 44px;
+    margin-bottom: 6px;
+    color: #d7dff2;
+    border: 1px solid transparent;
+    transition: background-color 0.18s ease, border-color 0.18s ease, transform 0.18s ease, color 0.18s ease;
+}
+
+.drawer-list :deep(.v-list-item:hover) {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.1);
+    transform: translateX(2px);
+}
+
+.drawer-list :deep(.v-list-item:active) {
+    background: rgba(229, 9, 20, 0.1);
+    transform: translateX(1px);
+}
+
+.drawer-list :deep(.v-list-item--active) {
+    background: rgba(229, 9, 20, 0.08);
+    border-color: transparent;
+    box-shadow: inset 3px 0 0 rgba(229, 9, 20, 0.72);
+}
+
+.drawer-list :deep(.v-list-item--active .v-list-item-title),
+.drawer-list :deep(.v-list-item--active .v-icon) {
+    color: #ffffff;
+}
+
+.drawer-list :deep(.v-icon) {
+    color: #eef3ff;
+    opacity: 1;
+}
+
+.drawer-close-btn {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    color: #f4f6fb;
+    background: transparent;
+    border: 0;
+    opacity: 0.72;
+    transition: background-color 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+}
+
+.drawer-close-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+    opacity: 1;
+    transform: scale(1.02);
 }
 
 .site-footer {
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    margin-top: 56px;
+    margin-top: 64px;
     border-top: 1px solid rgba(255, 255, 255, 0.12);
     background:
         linear-gradient(180deg, rgba(14, 16, 24, 0.95), rgba(9, 11, 16, 1)),
@@ -1088,7 +1160,7 @@ const removeFilter = (key) => {
 }
 
 .footer-text {
-    color: #b6bfd4;
+    color: #c5cddd;
     line-height: 1.55;
     font-size: 0.92rem;
 }
@@ -1114,6 +1186,13 @@ const removeFilter = (key) => {
 .footer-social-btn {
     border-color: rgba(255, 255, 255, 0.24);
     color: #e7eeff;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.footer-social-btn:hover {
+    transform: scale(1.03);
+    box-shadow: 0 0 18px rgba(76, 114, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.34);
 }
 
 .footer-bottom {
@@ -1148,7 +1227,38 @@ const removeFilter = (key) => {
 .empty-state-copy {
     max-width: 44ch;
     margin-inline: auto;
-    color: #b6bfd4;
+    color: #c8d0df;
+}
+
+.movie-card :deep(.v-card-text) {
+    padding: 20px 20px 12px;
+}
+
+.movie-card :deep(.v-card-actions) {
+    padding: 0 20px 20px !important;
+}
+
+:deep(.v-btn) {
+    transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease, background-color 0.2s ease,
+        border-color 0.2s ease;
+}
+
+.hero-section,
+.filter-card,
+.movie-card,
+.site-footer {
+    transition: box-shadow 0.2s ease, transform 0.2s ease, opacity 0.2s ease;
+}
+
+@keyframes subtle-fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 @media (max-width: 960px) {

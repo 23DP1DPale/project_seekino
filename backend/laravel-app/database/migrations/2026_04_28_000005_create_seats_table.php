@@ -6,29 +6,25 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
-        Schema::create('users', function (Blueprint $table) {
+        Schema::create('seats', function (Blueprint $table) {
             $table->engine = 'InnoDB';
             $table->charset = 'utf8mb4';
             $table->collation = 'utf8mb4_unicode_ci';
 
             $table->bigInteger('id', true);
-            $table->string('nickname', 50)->unique();
-            $table->string('email', 100)->unique();
-            $table->string('password');
-            $table->enum('role', ['user', 'admin'])->default('user');
+            $table->integer('row_number');
+            $table->integer('seat_number');
+            $table->bigInteger('hall');
+
+            $table->foreign('hall')->references('id')->on('halls')->cascadeOnDelete();
+            $table->unique(['hall', 'row_number', 'seat_number']);
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-        Schema::dropIfExists('users');
+        Schema::dropIfExists('seats');
     }
 };

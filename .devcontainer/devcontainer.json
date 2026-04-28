@@ -1,0 +1,19 @@
+{
+  "name": "Seekino Laravel PHP 8.3",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+  "runServices": ["app", "mysql"],
+  "shutdownAction": "stopCompose",
+  "forwardPorts": [8000, 5173, 3306],
+  "postCreateCommand": "cd backend/laravel-app && php -v && composer --version",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "bmewburn.vscode-intelephense-client",
+        "xdebug.php-debug",
+        "onecentlin.laravel-blade"
+      ]
+    }
+  }
+}

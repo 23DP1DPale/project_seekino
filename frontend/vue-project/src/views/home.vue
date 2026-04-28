@@ -41,32 +41,39 @@
         <v-navigation-drawer
             v-model="drawer"
             temporary
+            scrim="rgba(0, 0, 0, 0.82)"
             color="#101114"
             location="left"
             width="320"
             class="position-fixed app-drawer"
         >
-            <div class="drawer-header pa-4">
-                <p class="drawer-kicker mb-1">SEEKINO MENU</p>
-                <h3 class="drawer-title mb-1">Laipni lūgts kinoteātrī</h3>
-                <p class="drawer-subtitle mb-0">Ātra piekļuve filmām, seansiem un rezervācijām.</p>
+            <div class="drawer-header px-4 py-5">
+                <v-btn icon="mdi-close" variant="text" size="small" class="drawer-close-btn" @click="drawer = false" />
             </div>
 
             <v-divider />
 
-            <p class="drawer-section-label px-4 pt-4 pb-2">Navigācija</p>
-            <v-list nav class="drawer-list px-2">
-                <v-list-item
-                    v-for="item in menuItems"
-                    :key="item.title"
-                    :to="item.to || undefined"
-                    :prepend-icon="item.icon"
-                    :title="item.title"
-                    link
-                    rounded="lg"
-                    class="mb-1"
-                    @click="drawer = false"
-                />
+            <v-list nav class="drawer-list px-3 py-4">
+                <template v-for="group in menuGroups" :key="group.title">
+                    <v-list-subheader class="drawer-group-label px-2">
+                        {{ group.title }}
+                    </v-list-subheader>
+                    <v-list-item
+                        v-for="item in group.items"
+                        :key="item.title"
+                        :to="item.to || undefined"
+                        :prepend-icon="item.icon"
+                        :title="item.title"
+                        link
+                        rounded="lg"
+                        class="drawer-list-item"
+                        @click="drawer = false"
+                    />
+                    <v-divider
+                        v-if="!group.isLast"
+                        class="drawer-group-divider my-4"
+                    />
+                </template>
             </v-list>
         </v-navigation-drawer>
 
@@ -185,7 +192,7 @@
                         <p class="hero-badge">SEEKINO Kino apmeklējumu un biļešu tiešsaistes rezervēšanas sistēma</p>
                         <h1 class="hero-title mb-3">Rezervē biļetes, atrodi filmas un dalies atsauksmēs</h1>
                         <p class="hero-subtitle mb-6">
-                            Vienuviet pieejami seansi, sēdvietu izvēle, žanru un cenu filtri, kā arī lietotāju vērtējumi.
+                            Vienuviet pieejami aktuālie seansi, sēdvietu izvēle, populāras filmas un lietotāju vērtējumi.
                         </p>
                         <div class="d-flex flex-wrap ga-3">
                             <v-btn color="#E50914" size="large" rounded="lg" class="text-none">Apskatīt seansus</v-btn>
@@ -195,85 +202,11 @@
             </section>
 
             <v-container class="py-8">
-                <v-card class="filter-card pa-4 pa-md-6 rounded-xl mb-8" color="#151821">
-                    <div class="d-flex align-center justify-space-between flex-wrap ga-3 mb-4">
-                        <div>
-                            <p class="text-overline filter-kicker mb-1">Atlase</p>
-                            <h2 class="section-title mb-0">{{ filteredMovies.length }} filmas</h2>
-                        </div>
-                    </div>
-
-                    <v-row>
-                        <v-col cols="12" md="4">
-                            <v-text-field
-                                v-model="searchQuery"
-                                prepend-inner-icon="mdi-magnify"
-                                label="Meklēt pēc nosaukuma vai režisora"
-                                variant="outlined"
-                                hide-details
-                            />
-                        </v-col>
-                        <v-col cols="12" sm="6" md="2">
-                            <v-select
-                                v-model="selectedGenre"
-                                :items="genreOptions"
-                                label="Žanrs"
-                                variant="outlined"
-                                hide-details
-                            />
-                        </v-col>
-                        <v-col cols="12" sm="6" md="2">
-                            <v-select
-                                v-model="selectedAge"
-                                :items="ageOptions"
-                                label="Vecuma ierobežojums"
-                                variant="outlined"
-                                hide-details
-                            />
-                        </v-col>
-                        <v-col cols="12" md="2">
-                            <v-select
-                                v-model="sortBy"
-                                :items="sortOptions"
-                                label="Kārtot pēc"
-                                variant="outlined"
-                                hide-details
-                            />
-                        </v-col>
-                        <v-col cols="12" md="2">
-                            <div class="text-caption mb-2">Cena: {{ priceRange[0] }}€ - {{ priceRange[1] }}€</div>
-                            <v-range-slider
-                                v-model="priceRange"
-                                :min="6"
-                                :max="25"
-                                :step="1"
-                                strict
-                                hide-details
-                                color="#E50914"
-                            />
-                        </v-col>
-                    </v-row>
-
-                    <div v-if="activeFilters.length" class="active-filters mt-4">
-                        <v-chip
-                            v-for="filter in activeFilters"
-                            :key="filter.key"
-                            size="small"
-                            closable
-                            variant="outlined"
-                            class="active-filter-chip"
-                            @click:close="removeFilter(filter.key)"
-                        >
-                            {{ filter.label }}
-                        </v-chip>
-                    </div>
-                </v-card>
-
                 <div class="d-flex align-center justify-space-between mb-4 flex-wrap ga-3">
                     <h2 class="section-title">Populārākās filmas</h2>
                 </div>
 
-                <v-row v-if="displayedMovies.length">
+                <v-row>
                     <v-col
                         v-for="movie in displayedMovies"
                         :key="movie.id"
@@ -319,28 +252,6 @@
                         </v-card>
                     </v-col>
                 </v-row>
-
-                <v-card
-                    v-else
-                    class="empty-state-card rounded-xl pa-6 pa-md-8 text-center"
-                >
-                    <div class="empty-state-icon mb-4">
-                        <v-icon size="34">mdi-movie-search-outline</v-icon>
-                    </div>
-                    <h3 class="empty-state-title mb-2">Nav atrastu filmu</h3>
-                    <p class="empty-state-copy mb-5">
-                        Pamēģini notīrīt filtrus vai paplašini cenu diapazonu, lai redzētu visu repertuāru.
-                    </p>
-                    <v-btn
-                        color="#E50914"
-                        rounded="lg"
-                        class="text-none"
-                        prepend-icon="mdi-refresh"
-                        @click="resetFilters"
-                    >
-                        Notīrīt filtrus
-                    </v-btn>
-                </v-card>
 
                 <div class="mt-10">
                     <div class="d-flex align-center justify-space-between mb-4 flex-wrap ga-3">
@@ -451,11 +362,6 @@ import { computed, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 
 const drawer = ref(false)
-const searchQuery = ref('')
-const selectedGenre = ref('Visi')
-const selectedAge = ref('Visi')
-const sortBy = ref('Reitings')
-const priceRange = ref([6, 25])
 const authDialog = ref(false)
 const authMode = ref('login')
 const authLoading = ref(false)
@@ -463,11 +369,24 @@ const authError = ref('')
 const authSuccess = ref('')
 const loginForm = ref({ email: '', password: '' })
 const registerForm = ref({ name: '', email: '', password: '', confirmPassword: '' })
-const menuItems = [
-    { title: 'Sākums', icon: 'mdi-home-variant-outline', to: '/' },
-    { title: 'Filmas', icon: 'mdi-movie-open-outline', to: '/filmas' },
-    { title: 'Seansi', icon: 'mdi-calendar-clock-outline', to: '/seansi' },
-    { title: 'Kontakti', icon: 'mdi-phone-outline', to: '/kontakti' },
+const menuGroups = [
+    {
+        title: 'Kino',
+        items: [
+            { title: 'Sākums', icon: 'mdi-home-variant-outline', to: '/' },
+            { title: 'Filmas', icon: 'mdi-movie-open-outline', to: '/filmas' },
+            { title: 'Seansi', icon: 'mdi-calendar-clock-outline', to: '/seansi' },
+        ],
+    },
+    {
+        title: 'Lietotājs',
+        isLast: true,
+        items: [
+            { title: 'Mans profils', icon: 'mdi-account-outline', to: '/profils' },
+            { title: 'Manas rezervācijas', icon: 'mdi-ticket-confirmation-outline', to: '/rezervacijas' },
+            { title: 'Kontakti', icon: 'mdi-phone-outline', to: '/kontakti' },
+        ],
+    },
 ]
 const footerNavLinks = [
     { title: 'Sākums', to: '/' },
@@ -507,7 +426,7 @@ const movies = ref([
         id: 3,
         title: 'Orbīta 9',
         director: 'Jānis Ozols',
-        genre: 'Sci-Fi',
+        genre: 'Zinātniskā fantastika',
         length: 134,
         ageRating: '13+',
         rating: 4.8,
@@ -560,59 +479,8 @@ const upcomingShows = ref([
     { id: 4, movie: 'Smieklu terapija', date: '18.02.2026', time: '19:00', price: 6, hall: '3.', freeSeats: 64 },
 ])
 
-const genreOptions = computed(() => ['Visi', ...new Set(movies.value.map((movie) => movie.genre))])
-const ageOptions = computed(() => ['Visi', ...new Set(movies.value.map((movie) => movie.ageRating))])
-const sortOptions = ['Reitings', 'Cena augoši', 'Cena dilstoši', 'Ilgums']
-
-const filteredMovies = computed(() => {
-    const query = searchQuery.value.trim().toLowerCase()
-
-    const result = movies.value.filter((movie) => {
-        const matchesQuery =
-            !query ||
-            movie.title.toLowerCase().includes(query) ||
-            movie.director.toLowerCase().includes(query)
-        const matchesGenre = selectedGenre.value === 'Visi' || movie.genre === selectedGenre.value
-        const matchesAge = selectedAge.value === 'Visi' || movie.ageRating === selectedAge.value
-        const matchesPrice = movie.minPrice >= priceRange.value[0] && movie.minPrice <= priceRange.value[1]
-
-        return matchesQuery && matchesGenre && matchesAge && matchesPrice
-    })
-
-    return result.sort((a, b) => {
-        if (sortBy.value === 'Cena augoši') return a.minPrice - b.minPrice
-        if (sortBy.value === 'Cena dilstoši') return b.minPrice - a.minPrice
-        if (sortBy.value === 'Ilgums') return b.length - a.length
-        return b.rating - a.rating
-    })
-})
-
-const displayedMovies = computed(() => filteredMovies.value.slice(0, 6))
+const displayedMovies = computed(() => [...movies.value].sort((a, b) => b.rating - a.rating).slice(0, 6))
 const featuredShows = computed(() => upcomingShows.value.slice(0, 4))
-const resultsLabel = computed(() =>
-    filteredMovies.value.length === 1 ? '1 filma atlasē' : `${filteredMovies.value.length} filmas atlasē`
-)
-const activeFilters = computed(() => {
-    const filters = []
-
-    if (searchQuery.value.trim()) {
-        filters.push({ key: 'search', label: `Meklejums: ${searchQuery.value.trim()}` })
-    }
-    if (selectedGenre.value !== 'Visi') {
-        filters.push({ key: 'genre', label: selectedGenre.value })
-    }
-    if (selectedAge.value !== 'Visi') {
-        filters.push({ key: 'age', label: selectedAge.value })
-    }
-    if (sortBy.value !== 'Reitings') {
-        filters.push({ key: 'sort', label: `Kartot: ${sortBy.value}` })
-    }
-    if (priceRange.value[0] !== 6 || priceRange.value[1] !== 25) {
-        filters.push({ key: 'price', label: `Cena: ${priceRange.value[0]}-${priceRange.value[1]} EUR` })
-    }
-
-    return filters
-})
 
 const isEmailValid = (value) => /^\S+@\S+\.\S+$/.test(value)
 
@@ -680,21 +548,6 @@ const submitAuth = async () => {
             : 'Reģistrācijas forma gatava. Nākamais solis: savienot ar Laravel API.'
 }
 
-const resetFilters = () => {
-    searchQuery.value = ''
-    selectedGenre.value = 'Visi'
-    selectedAge.value = 'Visi'
-    sortBy.value = 'Reitings'
-    priceRange.value = [6, 25]
-}
-
-const removeFilter = (key) => {
-    if (key === 'search') searchQuery.value = ''
-    if (key === 'genre') selectedGenre.value = 'Visi'
-    if (key === 'age') selectedAge.value = 'Visi'
-    if (key === 'sort') sortBy.value = 'Reitings'
-    if (key === 'price') priceRange.value = [6, 25]
-}
 </script>
 
 <style scoped>
@@ -704,6 +557,12 @@ const removeFilter = (key) => {
         radial-gradient(circle at 80% 10%, #531d2c 0%, transparent 35%),
         #0a0c12;
     color: #f4f6fb;
+}
+
+.hero-panel,
+.movie-card,
+.show-card {
+    animation: subtle-fade-in 0.42s ease both;
 }
 
 .sticky-app-bar {
@@ -756,13 +615,16 @@ const removeFilter = (key) => {
 .nav-link-btn {
     color: #d7dff2;
     border: 1px solid transparent;
-    transition: color 0.16s ease, background-color 0.16s ease, border-color 0.16s ease;
+    transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease,
+        box-shadow 0.2s ease;
 }
 
 .nav-link-btn:hover {
     color: #ffffff;
     background: rgba(255, 255, 255, 0.08);
     border-color: rgba(255, 255, 255, 0.16);
+    transform: scale(1.03);
+    box-shadow: 0 0 18px rgba(76, 114, 255, 0.12);
 }
 
 .login-btn {
@@ -772,7 +634,7 @@ const removeFilter = (key) => {
     letter-spacing: 0.01em;
     box-shadow: 0 5px 26px rgba(229, 9, 20, 0.38);
     border: 1px solid rgba(255, 255, 255, 0.24);
-    transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
 }
 
 .login-btn :deep(.v-btn__content),
@@ -781,8 +643,8 @@ const removeFilter = (key) => {
 }
 
 .login-btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 5px 28px rgba(229, 9, 20, 0.5);
+    transform: scale(1.03);
+    box-shadow: 0 8px 30px rgba(229, 9, 20, 0.5), 0 0 24px rgba(108, 132, 255, 0.14);
     filter: brightness(1.07);
 }
 
@@ -906,7 +768,7 @@ const removeFilter = (key) => {
 
 .hero-subtitle {
     max-width: 64ch;
-    color: #c1c7d8;
+    color: #d2d9e7;
 }
 
 .section-title {
@@ -914,25 +776,17 @@ const removeFilter = (key) => {
     font-weight: 700;
 }
 
-.filter-card {
-    border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.filter-kicker {
-    color: #9aa5be;
-    letter-spacing: 0.08em;
-}
-
 .movie-card {
     border: 1px solid rgba(255, 255, 255, 0.09);
     background: linear-gradient(180deg, #141926, #0f131d);
-    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, filter 0.2s ease;
 }
 
 .movie-card:hover {
-    transform: translateY(-6px) scale(1.01);
-    box-shadow: 0 18px 36px rgba(0, 0, 0, 0.28);
+    transform: translateY(-8px);
+    box-shadow: 0 24px 42px rgba(0, 0, 0, 0.34);
     border-color: rgba(255, 255, 255, 0.18);
+    filter: brightness(1.02);
 }
 
 .movie-title {
@@ -941,11 +795,11 @@ const removeFilter = (key) => {
 }
 
 .movie-meta {
-    color: #ffffff;
+    color: #d6def0;
 }
 
 .movie-description {
-    color: #c1c7d8;
+    color: #d0d7e6;
     line-height: 1.55;
 }
 
@@ -963,7 +817,7 @@ const removeFilter = (key) => {
     font-weight: 700;
     letter-spacing: 0.02em;
     box-shadow: 0 10px 24px rgba(229, 9, 20, 0.4);
-    transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
 }
 
 .reserve-btn :deep(.v-btn__content),
@@ -972,13 +826,13 @@ const removeFilter = (key) => {
 }
 
 .reserve-btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 14px 28px rgba(229, 9, 20, 0.5);
+    transform: scale(1.03);
+    box-shadow: 0 14px 28px rgba(229, 9, 20, 0.5), 0 0 24px rgba(91, 112, 255, 0.12);
     filter: brightness(1.08);
 }
 
 .movie-card:hover .reserve-btn {
-    box-shadow: 0 16px 30px rgba(229, 9, 20, 0.58);
+    box-shadow: 0 16px 30px rgba(229, 9, 20, 0.58), 0 0 28px rgba(91, 112, 255, 0.16);
     filter: brightness(1.1);
 }
 
@@ -987,71 +841,80 @@ const removeFilter = (key) => {
 }
 
 .app-drawer {
+    position: relative;
     border-right: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 18px 0 42px rgba(0, 0, 0, 0.36);
 }
 
 .drawer-header {
-    background: linear-gradient(160deg, rgba(36, 53, 88, 0.65), rgba(94, 27, 46, 0.45));
+    min-height: 72px;
+    background: rgba(255, 255, 255, 0.02);
 }
 
-.drawer-kicker {
-    color: #d9e3ff;
-    letter-spacing: 1px;
+.drawer-group-label {
+    min-height: 28px;
+    color: #8994ac;
     font-size: 0.72rem;
-}
-
-.drawer-title {
-    color: #ffffff;
-    font-size: 1rem;
-}
-
-.drawer-subtitle {
-    color: #c1c7d8;
-    font-size: 0.82rem;
-}
-
-.drawer-section-label {
-    color: #9aa5be;
-    font-size: 0.75rem;
+    font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
 }
 
+.drawer-group-divider {
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
 .drawer-list :deep(.v-list-item) {
     min-height: 44px;
-}
-
-.filter-card :deep(.v-field),
-.filter-card :deep(.v-label),
-.filter-card :deep(.v-field__input),
-.filter-card :deep(.v-select__selection-text),
-.filter-card :deep(.v-icon) {
-    color: #f4f6fb;
-}
-
-.filter-card :deep(.v-label.v-field-label) {
-    opacity: 0.85;
-}
-
-.active-filters {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-}
-
-.active-filter-chip {
+    margin-bottom: 6px;
     color: #d7dff2;
-    border-color: rgba(255, 255, 255, 0.22);
-    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid transparent;
+    transition: background-color 0.18s ease, border-color 0.18s ease, transform 0.18s ease, color 0.18s ease;
 }
 
-.results-chip {
-    font-weight: 700;
+.drawer-list :deep(.v-list-item:hover) {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.1);
+    transform: translateX(2px);
 }
 
-.results-copy {
-    color: #a9b4cb;
-    font-size: 0.94rem;
+.drawer-list :deep(.v-list-item:active) {
+    background: rgba(229, 9, 20, 0.1);
+    transform: translateX(1px);
+}
+
+.drawer-list :deep(.v-list-item--active) {
+    background: rgba(229, 9, 20, 0.08);
+    border-color: transparent;
+    box-shadow: inset 3px 0 0 rgba(229, 9, 20, 0.72);
+}
+
+.drawer-list :deep(.v-list-item--active .v-list-item-title),
+.drawer-list :deep(.v-list-item--active .v-icon) {
+    color: #ffffff;
+}
+
+.drawer-list :deep(.v-icon) {
+    color: #eef3ff;
+    opacity: 1;
+}
+
+.drawer-close-btn {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    color: #f4f6fb;
+    background: transparent;
+    border: 0;
+    opacity: 0.72;
+    transition: background-color 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+}
+
+.drawer-close-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+    opacity: 1;
+    transform: scale(1.02);
 }
 
 .movie-card :deep(.v-card-text),
@@ -1059,9 +922,24 @@ const removeFilter = (key) => {
     color: #f4f6fb;
 }
 
+.movie-card :deep(.v-card-text) {
+    padding: 20px 20px 12px;
+}
+
+.movie-card :deep(.v-card-actions) {
+    padding: 0 20px 20px !important;
+}
+
 .show-card {
     border: 1px solid rgba(255, 255, 255, 0.1);
     background: linear-gradient(180deg, #161b29, #111522);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.show-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 22px 40px rgba(0, 0, 0, 0.3);
+    border-color: rgba(255, 255, 255, 0.16);
 }
 
 .show-movie {
@@ -1073,7 +951,7 @@ const removeFilter = (key) => {
 .show-meta {
     display: flex;
     align-items: center;
-    color: #cfd8ef;
+    color: #d9e1f0;
     font-size: 0.9rem;
 }
 
@@ -1086,7 +964,7 @@ const removeFilter = (key) => {
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    margin-top: 56px;
+    margin-top: 64px;
     border-top: 1px solid rgba(255, 255, 255, 0.12);
     background:
         linear-gradient(180deg, rgba(14, 16, 24, 0.95), rgba(9, 11, 16, 1)),
@@ -1099,7 +977,7 @@ const removeFilter = (key) => {
 }
 
 .footer-text {
-    color: #b6bfd4;
+    color: #c5cddd;
     line-height: 1.55;
     font-size: 0.92rem;
 }
@@ -1120,6 +998,13 @@ const removeFilter = (key) => {
 .footer-social-btn {
     border-color: rgba(255, 255, 255, 0.24);
     color: #e7eeff;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.footer-social-btn:hover {
+    transform: scale(1.03);
+    box-shadow: 0 0 18px rgba(76, 114, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.34);
 }
 
 .footer-bottom {
@@ -1129,30 +1014,26 @@ const removeFilter = (key) => {
     font-size: 0.82rem;
 }
 
-.empty-state-card {
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    background: linear-gradient(180deg, #141926, #0f131d);
+:deep(.v-btn) {
+    transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease, background-color 0.2s ease,
+        border-color 0.2s ease;
 }
 
-.empty-state-icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 76px;
-    height: 76px;
-    border-radius: 50%;
-    background: rgba(229, 9, 20, 0.12);
-    color: #ff7a70;
+.hero-section,
+.movie-card,
+.show-card,
+.site-footer {
+    transition: box-shadow 0.2s ease, transform 0.2s ease, opacity 0.2s ease;
 }
 
-.empty-state-title {
-    color: #ffffff;
-    font-size: 1.35rem;
-}
-
-.empty-state-copy {
-    max-width: 44ch;
-    margin-inline: auto;
-    color: #b6bfd4;
+@keyframes subtle-fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 </style>

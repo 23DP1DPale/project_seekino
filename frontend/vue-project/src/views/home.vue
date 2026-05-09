@@ -206,7 +206,40 @@
                     <h2 class="section-title">Populārākās filmas</h2>
                 </div>
 
-                <v-row>
+                <div v-if="moviesLoading" class="py-8 text-center">
+                    <v-progress-circular indeterminate color="#E50914" />
+                    <p class="movie-state-text mt-3 mb-0">Ielādē populārākās filmas...</p>
+                </div>
+
+                <v-alert
+                    v-else-if="moviesError"
+                    type="error"
+                    variant="tonal"
+                    class="mb-4"
+                >
+                    <div class="d-flex align-center justify-space-between flex-wrap ga-3">
+                        <span>{{ moviesError }}</span>
+                        <v-btn
+                            variant="outlined"
+                            rounded="lg"
+                            class="text-none"
+                            @click="fetchPopularMovies"
+                        >
+                            Mēģināt vēlreiz
+                        </v-btn>
+                    </div>
+                </v-alert>
+
+                <v-alert
+                    v-else-if="displayedMovies.length === 0"
+                    type="info"
+                    variant="tonal"
+                    class="mb-4"
+                >
+                    Populārākās filmas šobrīd nav pieejamas.
+                </v-alert>
+
+                <v-row v-else>
                     <v-col
                         v-for="movie in displayedMovies"
                         :key="movie.id"
@@ -220,15 +253,14 @@
                                 <div class="d-flex justify-space-between align-center mb-2">
                                     <h3 class="movie-title">{{ movie.title }}</h3>
                                     <v-chip size="small" prepend-icon="mdi-cash" class="movie-price-chip">
-                                        no {{ movie.minPrice }}€
+                                        no {{ movie.price }}€
                                     </v-chip>
                                 </div>
                                 <p class="text-caption movie-meta mb-2">
-                                    Režisors: {{ movie.director }} | {{ movie.length }} min
+                                    Režisors: {{ movie.director }} | {{ movie.duration }} min
                                 </p>
                                 <div class="d-flex flex-wrap ga-2 mb-2">
                                     <v-chip size="small" variant="outlined">{{ movie.genre }}</v-chip>
-                                    <v-chip size="small" variant="outlined">{{ movie.ageRating }}</v-chip>
                                 </div>
                                 <v-rating
                                     :model-value="movie.rating"
@@ -358,7 +390,7 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 
 const drawer = ref(false)
@@ -397,80 +429,9 @@ const footerNavLinks = [
 const footerUserLinks = ['Mans profils', 'Rezervācijas', 'Atbalsts', 'Privātuma politika']
 const socialIcons = ['mdi-facebook', 'mdi-instagram', 'mdi-youtube', 'mdi-twitter']
 
-const movies = ref([
-    {
-        id: 1,
-        title: 'Klusuma kods',
-        director: 'Anna Bērziņa',
-        genre: 'Trilleris',
-        length: 122,
-        ageRating: '16+',
-        rating: 4.5,
-        minPrice: 8,
-        description: 'Kibertrilleris par žurnālisti, kura atklāj bīstamu datu noplūdi.',
-        poster: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=1000&q=80',
-    },
-    {
-        id: 2,
-        title: 'Vasaras logs',
-        director: 'Māris Liepa',
-        genre: 'Drāma',
-        length: 110,
-        ageRating: '12+',
-        rating: 4.1,
-        minPrice: 7,
-        description: 'Dziļš stāsts par ģimeni, kas mēģina sākt dzīvi no jauna.',
-        poster: 'https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?auto=format&fit=crop&w=1000&q=80',
-    },
-    {
-        id: 3,
-        title: 'Orbīta 9',
-        director: 'Jānis Ozols',
-        genre: 'Zinātniskā fantastika',
-        length: 134,
-        ageRating: '13+',
-        rating: 4.8,
-        minPrice: 10,
-        description: 'Kosmosa ekspedīcija, kuras laikā apkalpe atrod noslēpumainu signālu.',
-        poster: 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=1000&q=80',
-    },
-    {
-        id: 4,
-        title: 'Smieklu terapija',
-        director: 'Elīna Siliņa',
-        genre: 'Komēdija',
-        length: 98,
-        ageRating: '7+',
-        rating: 3.9,
-        minPrice: 6,
-        description: 'Divi draugi cenšas glābt savu teātri ar negaidītu izrādi.',
-        poster: 'https://images.unsplash.com/photo-1524985069026-dd778a71c7b4?auto=format&fit=crop&w=1000&q=80',
-    },
-    {
-        id: 5,
-        title: 'Tumšā upe',
-        director: 'Rihards Kalniņš',
-        genre: 'Detektīvs',
-        length: 126,
-        ageRating: '16+',
-        rating: 4.3,
-        minPrice: 9,
-        description: 'Izmeklētājs meklē pazudušu liecinieku pilsētā bez uzticības.',
-        poster: 'https://images.unsplash.com/photo-1478720568477-152d9b164e26?auto=format&fit=crop&w=1000&q=80',
-    },
-    {
-        id: 6,
-        title: 'Sniega bērni',
-        director: 'Laura Vītola',
-        genre: 'Ģimenes',
-        length: 95,
-        ageRating: 'U',
-        rating: 4.0,
-        minPrice: 6,
-        description: 'Piedzīvojums bērniem par draudzību un drosmi ziemeļu ciematā.',
-        poster: 'https://images.unsplash.com/photo-1440404653325-ab127d49abc1?auto=format&fit=crop&w=1000&q=80',
-    },
-])
+const movies = ref([])
+const moviesLoading = ref(false)
+const moviesError = ref('')
 
 const upcomingShows = ref([
     { id: 1, movie: 'Klusuma kods', date: '17.02.2026', time: '18:30', price: 8, hall: '1.', freeSeats: 42 },
@@ -479,8 +440,53 @@ const upcomingShows = ref([
     { id: 4, movie: 'Smieklu terapija', date: '18.02.2026', time: '19:00', price: 6, hall: '3.', freeSeats: 64 },
 ])
 
-const displayedMovies = computed(() => [...movies.value].sort((a, b) => b.rating - a.rating).slice(0, 6))
+const displayedMovies = computed(() => movies.value.slice(0, 3))
 const featuredShows = computed(() => upcomingShows.value.slice(0, 4))
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'
+
+const normalizeMovie = (movie, index) => ({
+    id: movie.id ?? `${movie.title || 'movie'}-${index}`,
+    title: movie.title || 'Filmas nosaukums nav pieejams',
+    director: movie.director || 'Nav norādīts',
+    duration: movie.duration ?? '-',
+    genre: movie.genre || 'Nav norādīts',
+    rating: Number(movie.rating) || 0,
+    price: movie.price ?? '-',
+    poster: movie.poster || '',
+})
+
+const extractMovies = (payload) => {
+    if (Array.isArray(payload)) {
+        return payload
+    }
+
+    if (Array.isArray(payload?.data)) {
+        return payload.data
+    }
+
+    return []
+}
+
+const fetchPopularMovies = async () => {
+    moviesLoading.value = true
+    moviesError.value = ''
+
+    try {
+        const response = await fetch(`${apiBaseUrl}/api/movies?sort=rating&direction=desc`)
+
+        if (!response.ok) {
+            throw new Error('Filmas neizdevās ielādēt.')
+        }
+
+        const payload = await response.json()
+        movies.value = extractMovies(payload).slice(0, 3).map(normalizeMovie)
+    } catch {
+        movies.value = []
+        moviesError.value = 'Populārākās filmas šobrīd neizdevās ielādēt.'
+    } finally {
+        moviesLoading.value = false
+    }
+}
 
 const isEmailValid = (value) => /^\S+@\S+\.\S+$/.test(value)
 
@@ -547,6 +553,8 @@ const submitAuth = async () => {
             ? 'Pieslēgšanās forma gatava. Nākamais solis: savienot ar Laravel API.'
             : 'Reģistrācijas forma gatava. Nākamais solis: savienot ar Laravel API.'
 }
+
+onMounted(fetchPopularMovies)
 
 </script>
 

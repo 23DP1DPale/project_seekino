@@ -240,7 +240,7 @@
                                 <h1 class="detail-title mb-4">{{ movie.title }}</h1>
 
                                 <div class="d-flex flex-wrap ga-2 mb-4">
-                                    <v-chip size="small" class="movie-price-chip">no {{ movie.price }} EUR</v-chip>
+                                    <v-chip size="small" class="movie-price-chip">no {{ movie.price }}</v-chip>
                                     <v-chip size="small" variant="outlined" class="detail-chip">
                                         {{ movie.duration }} min
                                     </v-chip>
@@ -285,10 +285,10 @@
                                         size="large"
                                         rounded="lg"
                                         class="text-none reserve-btn"
-                                        append-icon="mdi-ticket-confirmation-outline"
-                                        :to="`/rezervacijas/filma/${movie.id}`"
+                                        append-icon="mdi-calendar-clock-outline"
+                                        @click="scrollToScreenings"
                                     >
-                                        Rezervēt biļeti
+                                        Izvēlēties seansu
                                     </v-btn>
                                     <v-btn
                                         variant="outlined"
@@ -300,64 +300,72 @@
                                         Atpakaļ uz filmām
                                     </v-btn>
                                 </div>
+
                             </v-col>
                         </v-row>
                     </div>
                 </v-container>
             </section>
 
-            <v-container v-if="movie && !movieLoading && !movieError" class="py-8">
-                <div class="d-flex align-center justify-space-between mb-4 flex-wrap ga-3">
-                    <h2 class="section-title">Pieejamie seansi</h2>
-                </div>
-
-                <v-row v-if="movie.screenings.length">
-                    <v-col
-                        v-for="screening in movie.screenings"
-                        :key="screening.id"
-                        cols="12"
-                        sm="6"
-                        lg="4"
-                    >
-                        <v-card class="screening-card h-100 rounded-xl pa-4">
-                            <div class="d-flex align-center justify-space-between mb-3">
-                                <v-chip size="small" color="#E50914" variant="flat">
-                                    {{ screening.date }}
-                                </v-chip>
-                                <v-chip size="small" variant="outlined" class="detail-chip">
-                                    {{ screening.price }} EUR
-                                </v-chip>
-                            </div>
-                            <h3 class="screening-title mb-3">{{ movie.title }}</h3>
-                            <p class="screening-meta mb-2">
-                                <v-icon size="16" class="mr-1">mdi-clock-outline</v-icon>{{ screening.time }}
-                            </p>
-                            <p class="screening-meta mb-4">
-                                <v-icon size="16" class="mr-1">mdi-sofa-outline</v-icon>{{ screening.hall }}
-                            </p>
-                            <v-btn
-                                color="#E50914"
-                                block
-                                rounded="lg"
-                                class="text-none reserve-btn"
-                                :to="`/rezervacijas/seanss/${screening.id}`"
-                            >
-                                Rezervēt biļeti
-                            </v-btn>
-                        </v-card>
-                    </v-col>
-                </v-row>
-
-                <v-card v-else class="empty-state-card rounded-xl pa-6 pa-md-8 text-center">
-                    <div class="empty-state-icon mb-4">
-                        <v-icon size="34">mdi-calendar-remove-outline</v-icon>
+            <section v-if="movie && !movieLoading && !movieError" ref="screeningsSection" class="screenings-section">
+                <v-container class="pt-4 pb-8">
+                    <div class="d-flex align-center justify-space-between mb-4 flex-wrap ga-3">
+                        <h2 class="section-title mb-0">Pieejamie seansi</h2>
+                        <v-chip
+                            v-if="selectedScreening"
+                            size="small"
+                            variant="outlined"
+                            class="detail-chip"
+                            prepend-icon="mdi-check-circle-outline"
+                        >
+                            Izvēlēts: {{ selectedScreening.date }} {{ selectedScreening.time }}
+                        </v-chip>
                     </div>
-                    <h3 class="empty-state-title mb-2">Seansi nav ieplānoti</h3>
-                    <p class="empty-state-copy mb-0">
-                        Šai filmai šobrīd nav pieejamu seansu. Pārbaudi vēlāk vai apskati citas filmas.
-                    </p>
-                </v-card>
-            </v-container>
+
+                    <v-row v-if="movie.screenings.length" dense>
+                        <v-col
+                            v-for="screening in movie.screenings"
+                            :key="screening.id"
+                            cols="12"
+                            sm="6"
+                            lg="4"
+                        >
+                            <v-card
+                                class="screening-card screening-choice-card h-100 rounded-xl pa-4"
+                                :class="{ 'screening-choice-card--selected': selectedScreeningId === screening.id }"
+                            >
+                                <div class="d-flex align-center justify-space-between mb-3">
+                                    <v-chip size="small" color="#E50914" variant="flat">
+                                        {{ screening.date }}
+                                    </v-chip>
+                                    <v-chip size="small" variant="outlined" class="detail-chip">
+                                        {{ screening.price }}
+                                    </v-chip>
+                                </div>
+                                <p class="screening-meta mb-2">
+                                    <v-icon size="16" class="mr-1">mdi-clock-outline</v-icon>{{ screening.time }}
+                                </p>
+                                <p class="screening-meta mb-4">
+                                    <v-icon size="16" class="mr-1">mdi-sofa-outline</v-icon>{{ screening.hall }}
+                                </p>
+                                <v-btn
+                                    :color="selectedScreeningId === screening.id ? '#24b26b' : '#E50914'"
+                                    block
+                                    rounded="lg"
+                                    class="text-none reserve-btn"
+                                    @click="selectScreening(screening)"
+                                >
+                                    Rezervēt biļeti
+                                </v-btn>
+                            </v-card>
+                        </v-col>
+                    </v-row>
+
+                    <v-card v-else class="empty-state-card rounded-xl pa-6 pa-md-8 text-center">
+                        <p class="empty-state-copy mb-0">Šobrīd šai filmai nav pieejamu seansu.</p>
+                    </v-card>
+                </v-container>
+            </section>
         </v-main>
 
         <v-footer class="site-footer pa-0">
@@ -443,6 +451,8 @@ const registerForm = ref({ name: '', email: '', password: '', confirmPassword: '
 const movie = ref(null)
 const movieLoading = ref(false)
 const movieError = ref('')
+const selectedScreeningId = ref(null)
+const screeningsSection = ref(null)
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'
 
 const menuGroups = [
@@ -475,18 +485,48 @@ const footerUserLinks = ['Mans profils', 'Rezervācijas', 'Atbalsts', 'Privātum
 const socialIcons = ['mdi-facebook', 'mdi-instagram', 'mdi-youtube', 'mdi-twitter']
 
 const movieId = computed(() => route.params.id)
+const selectedScreening = computed(() =>
+    movie.value?.screenings.find((screening) => screening.id === selectedScreeningId.value) || null
+)
+
+const formatDate = (value) => {
+    if (!value) return 'Nav ieplānots'
+
+    const [year, month, day] = String(value).replace('T', ' ').slice(0, 10).split('-')
+
+    if (!year || !month || !day) {
+        return String(value)
+    }
+
+    return `${day}.${month}.${year}.`
+}
+
+const formatTime = (value) => {
+    if (!value) return 'Laiks nav norādīts'
+
+    return String(value).slice(0, 5)
+}
 
 const formatDateTime = (value) => {
     if (!value) return 'Nav ieplānots'
 
-    return String(value).replace('T', ' ').slice(0, 16)
+    const normalized = String(value).replace('T', ' ')
+    const [date, time] = normalized.split(' ')
+
+    return `${formatDate(date)} ${formatTime(time)}`
+}
+
+const formatPrice = (value) => {
+    if (value === null || value === undefined || value === '') return '-'
+
+    return `${Number(value).toFixed(2)} €`
 }
 
 const normalizeScreening = (screening) => ({
     id: screening.id,
-    date: screening.screening_date || screening.date || screening.datetime?.slice(0, 10) || 'Datums nav norādīts',
-    time: screening.screening_time || screening.time || screening.datetime?.slice(11, 16) || 'Laiks nav norādīts',
-    price: screening.price ?? screening.cost ?? '-',
+    date: formatDate(screening.screening_date || screening.date || screening.datetime?.slice(0, 10)),
+    time: formatTime(screening.screening_time || screening.time || screening.datetime?.slice(11, 16)),
+    price: formatPrice(screening.price ?? screening.cost),
     hall: screening.hall?.name || (typeof screening.hall === 'string' ? screening.hall : 'Zāle nav norādīta'),
 })
 
@@ -508,7 +548,7 @@ const normalizeMovie = (payload) => {
         genresLabel: genres.length ? genres.join(', ') : 'Nav norādīts',
         ageRating: payload.ageRating || payload.age_restriction || 'Nav norādīts',
         rating: Number(payload.rating ?? payload.average_rating) || 0,
-        price: payload.price ?? payload.lowest_price ?? payload.minPrice ?? '-',
+        price: formatPrice(payload.price ?? payload.lowest_price ?? payload.minPrice),
         poster: payload.poster || payload.image || '',
         nextScreeningLabel: formatDateTime(nextScreening),
         screenings,
@@ -518,6 +558,7 @@ const normalizeMovie = (payload) => {
 const fetchMovie = async () => {
     movieLoading.value = true
     movieError.value = ''
+    selectedScreeningId.value = null
 
     try {
         const response = await fetch(`${apiBaseUrl}/api/movies/${movieId.value}`, {
@@ -542,6 +583,21 @@ const fetchMovie = async () => {
 
 onMounted(fetchMovie)
 watch(movieId, fetchMovie)
+
+const selectScreening = (screening) => {
+    selectedScreeningId.value = screening.id
+}
+
+const scrollToScreenings = () => {
+    const target = screeningsSection.value?.$el || screeningsSection.value
+
+    if (!target) return
+
+    const headerOffset = 96
+    const top = target.getBoundingClientRect().top + window.scrollY - headerOffset
+
+    window.scrollTo({ top, behavior: 'smooth' })
+}
 
 const isEmailValid = (value) => /^\S+@\S+\.\S+$/.test(value)
 
@@ -642,7 +698,30 @@ const submitAuth = async () => {
 }
 
 .main-content {
+    position: relative;
     padding-top: 0;
+    overflow: hidden;
+    background:
+        radial-gradient(circle at 12% 18%, rgba(68, 111, 203, 0.34), transparent 42%),
+        radial-gradient(circle at 82% 14%, rgba(220, 54, 88, 0.3), transparent 38%),
+        radial-gradient(circle at 56% 86%, rgba(66, 141, 106, 0.22), transparent 36%),
+        linear-gradient(130deg, #0f1628 0%, #17172a 45%, #2a141d 100%);
+}
+
+.main-content::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+        repeating-linear-gradient(
+            120deg,
+            rgba(255, 255, 255, 0.03) 0,
+            rgba(255, 255, 255, 0.03) 1px,
+            transparent 1px,
+            transparent 18px
+        );
+    opacity: 0.35;
+    pointer-events: none;
 }
 
 .logo {
@@ -760,27 +839,27 @@ const submitAuth = async () => {
 .hero-section {
     position: relative;
     overflow: hidden;
-    background:
-        radial-gradient(circle at 12% 18%, rgba(68, 111, 203, 0.34), transparent 42%),
-        radial-gradient(circle at 82% 14%, rgba(220, 54, 88, 0.3), transparent 38%),
-        radial-gradient(circle at 56% 86%, rgba(66, 141, 106, 0.22), transparent 36%),
-        linear-gradient(130deg, #0f1628 0%, #17172a 45%, #2a141d 100%);
+    background: transparent;
 }
 
 .hero-section::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background:
-        repeating-linear-gradient(
-            120deg,
-            rgba(255, 255, 255, 0.03) 0,
-            rgba(255, 255, 255, 0.03) 1px,
-            transparent 1px,
-            transparent 18px
-        );
-    opacity: 0.35;
-    pointer-events: none;
+    content: none;
+}
+
+.screenings-section {
+    position: relative;
+    overflow: hidden;
+    background: transparent;
+}
+
+.screenings-section::before {
+    content: none;
+}
+
+.hero-section :deep(.v-container),
+.screenings-section :deep(.v-container) {
+    position: relative;
+    z-index: 1;
 }
 
 .hero-panel {
@@ -879,6 +958,11 @@ const submitAuth = async () => {
     filter: brightness(1.08);
 }
 
+.reserve-btn.v-btn--disabled {
+    opacity: 0.48;
+    box-shadow: none;
+}
+
 .outline-btn {
     color: #edf2ff;
     border-color: rgba(255, 255, 255, 0.28);
@@ -888,6 +972,23 @@ const submitAuth = async () => {
 .empty-state-card {
     border: 1px solid rgba(255, 255, 255, 0.1);
     background: linear-gradient(180deg, #141926, #0f131d);
+}
+
+.screening-choice-card {
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, filter 0.2s ease;
+}
+
+.screening-choice-card:hover {
+    transform: translateY(-3px);
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 18px 32px rgba(0, 0, 0, 0.26);
+}
+
+.screening-choice-card--selected {
+    border-color: rgba(36, 178, 107, 0.88);
+    box-shadow: 0 0 0 1px rgba(36, 178, 107, 0.44), 0 18px 36px rgba(9, 61, 38, 0.32);
+    filter: brightness(1.04);
 }
 
 .screening-card :deep(.v-card-text),

@@ -975,7 +975,6 @@ const submitAuth = async () => {
 }
 
 .screening-choice-card {
-
     transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, filter 0.2s ease;
 }
 

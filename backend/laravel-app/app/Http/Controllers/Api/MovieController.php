@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Hall;
 use App\Models\Movie;
 use App\Models\Screening;
 use Carbon\Carbon;
@@ -25,7 +26,7 @@ class MovieController extends Controller
         $movies = Movie::query()
             ->with([
                 'genres',
-                'screenings.hall',
+                'screenings.cinemaHall',
             ])
             ->withAvg('feedbacks as rating', 'rating')
             ->withMin('screenings as price', 'cost')
@@ -62,7 +63,7 @@ class MovieController extends Controller
     {
         $movie->load([
             'genres',
-            'screenings.hall',
+            'screenings.cinemaHall',
             'feedbacks',
         ])->loadAvg('feedbacks as rating', 'rating')
             ->loadMin('screenings as price', 'cost');
@@ -74,10 +75,10 @@ class MovieController extends Controller
     {
         $screenings = Screening::query()
             ->with([
-                'hall',
-                'movie.genres',
-                'movie.screenings.hall',
-                'movie.feedbacks',
+                'cinemaHall',
+                'movieRecord.genres',
+                'movieRecord.screenings.cinemaHall',
+                'movieRecord.feedbacks',
             ])
             ->orderBy('screening_date')
             ->orderBy('screening_time')
@@ -249,22 +250,38 @@ class MovieController extends Controller
         return (float) $movie->screenings->min('cost');
     }
 
-    private function hallFor(Screening $screening)
+    private function hallFor(Screening $screening): ?Hall
     {
-        if ($screening->relationLoaded('hall')) {
-            return $screening->getRelation('hall');
+        if ($screening->relationLoaded('cinemaHall')) {
+            $hall = $screening->getRelation('cinemaHall');
+
+            return $hall instanceof Hall ? $hall : null;
         }
 
-        return $screening->hall()->first();
+        if ($screening->relationLoaded('hall')) {
+            $hall = $screening->getRelation('hall');
+
+            return $hall instanceof Hall ? $hall : null;
+        }
+
+        return $screening->cinemaHall()->first();
     }
 
     private function movieFor(Screening $screening): ?Movie
     {
-        if ($screening->relationLoaded('movie')) {
-            return $screening->getRelation('movie');
+        if ($screening->relationLoaded('movieRecord')) {
+            $movie = $screening->getRelation('movieRecord');
+
+            return $movie instanceof Movie ? $movie : null;
         }
 
-        return $screening->movie()->first();
+        if ($screening->relationLoaded('movie')) {
+            $movie = $screening->getRelation('movie');
+
+            return $movie instanceof Movie ? $movie : null;
+        }
+
+        return $screening->movieRecord()->first();
     }
 
     private function posterFor(int $movieId): ?string

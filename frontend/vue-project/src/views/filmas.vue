@@ -274,7 +274,36 @@
 
                 </div>
 
-                <v-row v-if="filteredMovies.length">
+                <v-card
+                    v-if="moviesLoading"
+                    class="empty-state-card rounded-xl pa-6 pa-md-8 text-center"
+                >
+                    <v-progress-circular indeterminate color="#E50914" size="44" class="mb-4" />
+                    <h3 class="empty-state-title mb-2">Filmas tiek ielādētas</h3>
+                    <p class="empty-state-copy mb-0">Lūdzu uzgaidi, kamēr saņemam repertuāru no servera.</p>
+                </v-card>
+
+                <v-alert
+                    v-else-if="moviesError"
+                    type="error"
+                    variant="tonal"
+                    class="empty-state-card rounded-xl mb-6"
+                >
+                    <div class="d-flex align-center justify-space-between flex-wrap ga-3">
+                        <span>{{ moviesError }}</span>
+                        <v-btn
+                            color="#E50914"
+                            rounded="lg"
+                            class="text-none"
+                            :loading="moviesLoading"
+                            @click="fetchMovies"
+                        >
+                            Mēģināt vēlreiz
+                        </v-btn>
+                    </div>
+                </v-alert>
+
+                <v-row v-else-if="filteredMovies.length">
                     <v-col
                         v-for="movie in filteredMovies"
                         :key="movie.id"
@@ -288,11 +317,11 @@
                                 <div class="d-flex justify-space-between align-center mb-2">
                                     <h3 class="movie-title">{{ movie.title }}</h3>
                                     <v-chip size="small" class="movie-price-chip">
-                                        no {{ movie.price }} EUR
+                                        no {{ movie.price ?? '-' }} EUR
                                     </v-chip>
                                 </div>
                                 <p class="text-caption movie-meta mb-2">
-                                    Režisors: {{ movie.director }} | {{ movie.duration }} min
+                                    Režisors: {{ movie.director }} | {{ movie.duration ?? '-' }} min
                                 </p>
                                 <div class="d-flex flex-wrap ga-2 mb-2">
                                     <v-chip size="small" variant="outlined">{{ movie.genre }}</v-chip>
@@ -306,8 +335,8 @@
                                     color="#FFD166"
                                 />
                                 <div class="movie-session-row mt-4">
-                                    <span>Nākamais seanss: {{ movie.nextSession }}</span>
-                                    <span>{{ movie.formats.join(' | ') }}</span>
+                                    <span>Nākamais seanss: {{ movie.nextSession || 'Nav ieplānots' }}</span>
+                                    <span>{{ (movie.formats || []).join(' | ') }}</span>
                                 </div>
                             </v-card-text>
                             <v-card-actions class="px-4 pb-4">
@@ -419,7 +448,7 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 
 const drawer = ref(false)
@@ -464,100 +493,54 @@ const footerUserLinks = ['Mans profils', 'Rezervācijas', 'Atbalsts', 'Privātum
 
 const socialIcons = ['mdi-facebook', 'mdi-instagram', 'mdi-youtube', 'mdi-twitter']
 
-const movies = ref([
-    {
-        id: 1,
-        title: 'Klusuma kods',
-        director: 'Anna Bērziņa',
-        genre: 'Trilleris',
-        duration: 122,
-        ageRating: '16+',
-        language: 'LV subtitri',
-        rating: 4.8,
-        price: 8,
-        nextSession: 'Šodien 18:30',
-        formats: ['2D', 'Dolby Atmos'],
-        poster: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=1000&q=80',
-        description: 'Žurnāliste nonāk datu noplūdes epicentrā un atklāj sazvērestību, kas skar visu pilsētu.',
-    },
-    {
-        id: 2,
-        title: 'Orbīta 9',
-        director: 'Jānis Ozols',
-        genre: 'Zinātniskā fantastika',
-        duration: 134,
-        ageRating: '13+',
-        language: 'EN subtitri',
-        rating: 4.9,
-        price: 10,
-        nextSession: 'Šodien 20:40',
-        formats: ['IMAX', '3D'],
-        poster: 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=1000&q=80',
-        description: 'Kosmosa ekspedīcija seko noslēpumainam signālam, kas liek pārskatīt pašas misijas mērķi.',
-    },
-    {
-        id: 3,
-        title: 'Vasaras logs',
-        director: 'Māris Liepa',
-        genre: 'Drāma',
-        duration: 110,
-        ageRating: '12+',
-        language: 'Latviešu valodā',
-        rating: 4.3,
-        price: 7,
-        nextSession: 'Rīt 17:20',
-        formats: ['2D'],
-        poster: 'https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?auto=format&fit=crop&w=1000&q=80',
-        description: 'Intīms stāsts par ģimeni, kas mēģina atgūt tuvību pēc dzīves lielākajām pārmaiņām.',
-    },
-    {
-        id: 4,
-        title: 'Smieklu terapija',
-        director: 'Elīna Siliņa',
-        genre: 'Komēdija',
-        duration: 98,
-        ageRating: '7+',
-        language: 'Latviešu valodā',
-        rating: 4.0,
-        price: 6,
-        nextSession: 'Šodien 19:00',
-        formats: ['2D'],
-        poster: 'https://images.unsplash.com/photo-1524985069026-dd778a71c7b4?auto=format&fit=crop&w=1000&q=80',
-        description: 'Divi draugi glābj teātri ar neprātīgu izrādi, kas kļūst par negaidītu sensāciju.',
-    },
-    {
-        id: 5,
-        title: 'Tumšā upe',
-        director: 'Rihards Kalniņš',
-        genre: 'Detektīvs',
-        duration: 126,
-        ageRating: '16+',
-        language: 'EN subtitri',
-        rating: 4.5,
-        price: 9,
-        nextSession: 'Rīt 21:10',
-        formats: ['2D', 'VIP zāle'],
-        poster: 'https://images.unsplash.com/photo-1478720568477-152d9b164e26?auto=format&fit=crop&w=1000&q=80',
-        description: 'Pilsētā bez uzticības izmeklētājs meklē liecinieku, kura pazušana var mainīt visu lietu.',
-    },
-    {
-        id: 6,
-        title: 'Sniega bērni',
-        director: 'Laura Vītola',
-        genre: 'Ģimenes',
-        duration: 95,
-        ageRating: 'U',
-        language: 'Dublēta latviski',
-        rating: 4.2,
-        price: 6,
-        nextSession: 'Sestdien 12:10',
-        formats: ['2D'],
-        poster: 'https://images.unsplash.com/photo-1440404653325-ab127d49abc1?auto=format&fit=crop&w=1000&q=80',
-        description: 'Sirsnīgs ziemas piedzīvojums par draudzību, drosmi un maziem brīnumiem lielā sniegā.',
-    },
-])
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'
+const movies = ref([])
+const moviesLoading = ref(false)
+const moviesError = ref('')
 
-const genreOptions = computed(() => ['Visi', ...new Set(movies.value.map((movie) => movie.genre))])
+const normalizeMovie = (movie) => ({
+    id: movie.id,
+    title: movie.title,
+    director: movie.director,
+    duration: movie.duration,
+    genre: movie.genre,
+    ageRating: movie.ageRating,
+    rating: movie.rating,
+    price: movie.price,
+    poster: movie.poster,
+    nextSession: movie.nextSession,
+    formats: movie.formats || [],
+    description: movie.description,
+})
+
+const fetchMovies = async () => {
+    moviesLoading.value = true
+    moviesError.value = ''
+
+    try {
+        const response = await fetch(`${apiBaseUrl}/api/movies`, {
+            headers: {
+                Accept: 'application/json',
+            },
+        })
+
+        if (!response.ok) {
+            throw new Error('Neizdevās ielādēt filmas no servera.')
+        }
+
+        const data = await response.json()
+        movies.value = data.map(normalizeMovie)
+    } catch (error) {
+        movies.value = []
+        moviesError.value = error.message || 'Neizdevās ielādēt filmas no servera.'
+    } finally {
+        moviesLoading.value = false
+    }
+}
+
+onMounted(fetchMovies)
+
+const genreOptions = computed(() => ['Visi', ...new Set(movies.value.map((movie) => movie.genre).filter(Boolean))])
 const sortOptions = ['Reitings', 'Cena augoši', 'Cena dilstoši', 'Ilgums']
 const quickGenres = computed(() => genreOptions.value.filter((genre) => genre !== 'Visi').slice(0, 4))
 
@@ -567,18 +550,18 @@ const filteredMovies = computed(() => {
     const result = movies.value.filter((movie) => {
         const matchesQuery =
             !query ||
-            movie.title.toLowerCase().includes(query) ||
-            movie.director.toLowerCase().includes(query)
+            movie.title?.toLowerCase().includes(query) ||
+            movie.director?.toLowerCase().includes(query)
         const matchesGenre = selectedGenre.value === 'Visi' || movie.genre === selectedGenre.value
 
         return matchesQuery && matchesGenre
     })
 
     return result.sort((a, b) => {
-        if (sortBy.value === 'Cena augoši') return a.price - b.price
-        if (sortBy.value === 'Cena dilstoši') return b.price - a.price
-        if (sortBy.value === 'Ilgums') return b.duration - a.duration
-        return b.rating - a.rating
+        if (sortBy.value === 'Cena augoši') return (a.price ?? 0) - (b.price ?? 0)
+        if (sortBy.value === 'Cena dilstoši') return (b.price ?? 0) - (a.price ?? 0)
+        if (sortBy.value === 'Ilgums') return (b.duration ?? 0) - (a.duration ?? 0)
+        return (b.rating ?? 0) - (a.rating ?? 0)
     })
 })
 

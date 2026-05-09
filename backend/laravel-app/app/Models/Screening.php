@@ -30,7 +30,17 @@ class Screening extends Model
         return $this->belongsTo(Hall::class, 'hall');
     }
 
+    public function cinemaHall(): BelongsTo
+    {
+        return $this->belongsTo(Hall::class, 'hall');
+    }
+
     public function movie(): BelongsTo
+    {
+        return $this->belongsTo(Movie::class, 'movie');
+    }
+
+    public function movieRecord(): BelongsTo
     {
         return $this->belongsTo(Movie::class, 'movie');
     }

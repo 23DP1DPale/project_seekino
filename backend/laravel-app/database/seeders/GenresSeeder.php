@@ -12,33 +12,33 @@ class GenresSeeder extends Seeder
         $genres = [
             [
                 'id' => 1,
-                'name' => 'Drama',
-                'description' => 'Character focused stories with emotional conflicts.',
+                'name' => 'Drāma',
+                'description' => 'Uz tēliem balstīti stāsti ar emocionāliem konfliktiem un personīgām izvēlēm.',
             ],
             [
                 'id' => 2,
-                'name' => 'Action',
-                'description' => 'Fast paced films with high stakes and physical conflict.',
+                'name' => 'Asa sižeta',
+                'description' => 'Ātra tempa filmas ar augstām likmēm, spriedzi un fizisku konfliktu.',
             ],
             [
                 'id' => 3,
-                'name' => 'Comedy',
-                'description' => 'Light stories built around humor and timing.',
+                'name' => 'Komēdija',
+                'description' => 'Vieglas noskaņas stāsti, kuru centrā ir humors, situācijas un precīzs komiskais ritms.',
             ],
             [
                 'id' => 4,
-                'name' => 'Sci-Fi',
-                'description' => 'Speculative stories about technology, space, and possible futures.',
+                'name' => 'Zinātniskā fantastika',
+                'description' => 'Iztēles stāsti par tehnoloģijām, kosmosu un iespējamām nākotnēm.',
             ],
             [
                 'id' => 5,
-                'name' => 'Mystery',
-                'description' => 'Stories driven by clues, secrets, and investigation.',
+                'name' => 'Mistērija',
+                'description' => 'Stāsti, kurus virza pavedieni, noslēpumi un izmeklēšana.',
             ],
             [
                 'id' => 6,
-                'name' => 'Thriller',
-                'description' => 'Suspense driven stories with danger and pressure.',
+                'name' => 'Trilleris',
+                'description' => 'Spriedzes stāsti ar apdraudējumu, spiedienu un negaidītiem pavērsieniem.',
             ],
         ];
 

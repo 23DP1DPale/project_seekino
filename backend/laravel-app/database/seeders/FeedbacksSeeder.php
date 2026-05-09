@@ -13,7 +13,7 @@ class FeedbacksSeeder extends Seeder
             [
                 'id' => 1,
                 'rating' => '4.5',
-                'comment' => 'Strong atmosphere and a clever ending.',
+                'comment' => 'Spēcīga atmosfēra un gudrs noslēgums.',
                 'created_at' => '2026-05-03 11:20:00',
                 'movie' => 1,
                 'user' => 1,
@@ -21,7 +21,7 @@ class FeedbacksSeeder extends Seeder
             [
                 'id' => 2,
                 'rating' => '4.0',
-                'comment' => 'Great action scenes and solid pacing.',
+                'comment' => 'Lieliskas asa sižeta ainas un pārliecinošs ritms.',
                 'created_at' => '2026-05-03 22:10:00',
                 'movie' => 3,
                 'user' => 2,
@@ -29,7 +29,7 @@ class FeedbacksSeeder extends Seeder
             [
                 'id' => 3,
                 'rating' => '5.0',
-                'comment' => 'Beautiful visuals and a memorable story.',
+                'comment' => 'Skaista vizuālā valoda un atmiņā paliekošs stāsts.',
                 'created_at' => '2026-05-05 09:45:00',
                 'movie' => 4,
                 'user' => 1,
@@ -37,7 +37,7 @@ class FeedbacksSeeder extends Seeder
             [
                 'id' => 4,
                 'rating' => '3.5',
-                'comment' => 'Funny moments, though a few scenes felt slow.',
+                'comment' => 'Smieklīgi brīži, lai gan dažas ainas šķita lēnākas.',
                 'created_at' => '2026-05-05 18:30:00',
                 'movie' => 5,
                 'user' => 2,

@@ -10,8 +10,8 @@ class HallsAndSeatsSeeder extends Seeder
     public function run(): void
     {
         $halls = [
-            ['id' => 1, 'name' => 'Hall A', 'seat_amount' => 40],
-            ['id' => 2, 'name' => 'Hall B', 'seat_amount' => 24],
+            ['id' => 1, 'name' => 'Zāle A', 'seat_amount' => 40],
+            ['id' => 2, 'name' => 'Zāle B', 'seat_amount' => 24],
         ];
 
         foreach ($halls as $hall) {

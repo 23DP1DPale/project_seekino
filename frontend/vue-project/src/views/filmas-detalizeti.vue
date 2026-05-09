@@ -189,16 +189,115 @@
             <section class="hero-section">
                 <v-container class="py-8 py-md-10">
                     <div class="hero-panel pa-5 pa-md-7">
-                        <v-row align="center">
-                            <v-col cols="12" md="12">
-                                <p class="hero-badge">SEEKINO filmu katalogs</p>
-                                <h1 class="hero-title mb-3">Atrodi filmu un uzreiz pārej uz seansiem</h1>
-                                <p class="hero-subtitle mb-4">
-                                    Pārlūko repertuāru, salīdzini vērtējumus un izvēlies sev piemērotāko filmu.
-                                </p>
-                                <div class="d-flex flex-wrap ga-3">
-                                    <v-btn color="#E50914" size="large" rounded="lg" class="text-none" to="/seansi">
-                                        Skatīt seansus
+                        <v-btn
+                            variant="text"
+                            class="text-none back-link mb-4"
+                            prepend-icon="mdi-arrow-left"
+                            to="/filmas"
+                        >
+                            Atpakaļ uz filmām
+                        </v-btn>
+
+                        <div v-if="movieLoading" class="detail-state text-center py-10">
+                            <v-progress-circular indeterminate color="#E50914" size="46" class="mb-4" />
+                            <h1 class="section-title mb-2">Filma tiek ielādēta</h1>
+                            <p class="detail-muted mb-0">Lūdzu uzgaidi, kamēr saņemam informāciju no servera.</p>
+                        </div>
+
+                        <v-alert
+                            v-else-if="movieError"
+                            type="error"
+                            variant="tonal"
+                            class="detail-alert rounded-xl"
+                        >
+                            <div class="d-flex align-center justify-space-between flex-wrap ga-3">
+                                <span>{{ movieError }}</span>
+                                <v-btn
+                                    color="#E50914"
+                                    rounded="lg"
+                                    class="text-none"
+                                    :loading="movieLoading"
+                                    @click="fetchMovie"
+                                >
+                                    Mēģināt vēlreiz
+                                </v-btn>
+                            </div>
+                        </v-alert>
+
+                        <v-row v-else-if="movie" align="center" class="movie-detail-grid">
+                            <v-col cols="12" md="5" lg="4">
+                                <v-img
+                                    :src="movie.poster"
+                                    :alt="movie.title"
+                                    aspect-ratio="0.72"
+                                    cover
+                                    class="detail-poster rounded-xl"
+                                />
+                            </v-col>
+
+                            <v-col cols="12" md="7" lg="8">
+                                <p class="hero-badge">SEEKINO filmas detaļas</p>
+                                <h1 class="detail-title mb-4">{{ movie.title }}</h1>
+
+                                <div class="d-flex flex-wrap ga-2 mb-4">
+                                    <v-chip size="small" class="movie-price-chip">no {{ movie.price }} EUR</v-chip>
+                                    <v-chip size="small" variant="outlined" class="detail-chip">
+                                        {{ movie.duration }} min
+                                    </v-chip>
+                                    <v-chip size="small" variant="outlined" class="detail-chip">
+                                        {{ movie.ageRating }}
+                                    </v-chip>
+                                </div>
+
+                                <p class="detail-description mb-5">{{ movie.description }}</p>
+
+                                <v-row class="detail-facts">
+                                    <v-col cols="12" sm="6">
+                                        <span class="fact-label">Režisors</span>
+                                        <strong>{{ movie.director }}</strong>
+                                    </v-col>
+                                    <v-col cols="12" sm="6">
+                                        <span class="fact-label">Vērtējums</span>
+                                        <div class="d-flex align-center ga-2">
+                                            <v-rating
+                                                :model-value="movie.rating"
+                                                half-increments
+                                                readonly
+                                                density="compact"
+                                                color="#FFD166"
+                                            />
+                                            <strong>{{ movie.rating }}</strong>
+                                        </div>
+                                    </v-col>
+                                    <v-col cols="12" sm="6">
+                                        <span class="fact-label">Žanri</span>
+                                        <strong>{{ movie.genresLabel }}</strong>
+                                    </v-col>
+                                    <v-col cols="12" sm="6">
+                                        <span class="fact-label">Nākamais seanss</span>
+                                        <strong>{{ movie.nextScreeningLabel }}</strong>
+                                    </v-col>
+                                </v-row>
+
+                                <div class="d-flex flex-wrap ga-3 mt-6">
+                                    <v-btn
+                                        color="#E50914"
+                                        size="large"
+                                        rounded="lg"
+                                        class="text-none reserve-btn"
+                                        append-icon="mdi-ticket-confirmation-outline"
+                                        :to="`/rezervacijas/filma/${movie.id}`"
+                                    >
+                                        Rezervēt biļeti
+                                    </v-btn>
+                                    <v-btn
+                                        variant="outlined"
+                                        size="large"
+                                        rounded="lg"
+                                        class="text-none outline-btn"
+                                        to="/filmas"
+                                    >
+                                        Atpakaļ uz filmām
                                     </v-btn>
                                 </div>
                             </v-col>
@@ -207,176 +306,57 @@
                 </v-container>
             </section>
 
-            <v-container class="py-8">
-                <v-card class="filter-card pa-4 pa-md-6 rounded-xl mb-8" color="#151821">
-                    <div class="d-flex align-center justify-space-between flex-wrap ga-3 mb-4">
-                        <div>
-                            <p class="text-overline filter-kicker mb-1">Atlase</p>
-                            <h2 class="section-title mb-0">{{ filteredMovies.length }} filmas</h2>
-                        </div>
-                    </div>
-
-                    <v-row>
-                        <v-col cols="12" md="5">
-                            <v-text-field
-                                v-model="searchQuery"
-                                prepend-inner-icon="mdi-magnify"
-                                label="Meklēt pēc nosaukuma vai režisora"
-                                variant="outlined"
-                                hide-details
-                            />
-                        </v-col>
-                        <v-col cols="12" sm="6" md="3">
-                            <v-select
-                                v-model="selectedGenre"
-                                :items="genreOptions"
-                                label="Žanrs"
-                                variant="outlined"
-                                hide-details
-                            />
-                        </v-col>
-                        <v-col cols="12" sm="6" md="2">
-                            <v-select
-                                v-model="sortBy"
-                                :items="sortOptions"
-                                label="Kārtot pēc"
-                                variant="outlined"
-                                hide-details
-                            />
-                        </v-col>
-                    </v-row>
-
-                    <div v-if="activeFilters.length" class="active-filters mt-4">
-                        <v-chip
-                            v-for="filter in activeFilters"
-                            :key="filter.key"
-                            size="small"
-                            closable
-                            variant="outlined"
-                            class="active-filter-chip"
-                            @click:close="removeFilter(filter.key)"
-                        >
-                            {{ filter.label }}
-                        </v-chip>
-                        <v-btn
-                            variant="text"
-                            rounded="pill"
-                            class="text-none reset-filters-inline"
-                            @click="resetFilters"
-                        >
-                            Notīrīt filtrus
-                        </v-btn>
-                    </div>
-                </v-card>
-
+            <v-container v-if="movie && !movieLoading && !movieError" class="py-8">
                 <div class="d-flex align-center justify-space-between mb-4 flex-wrap ga-3">
-                    <h2 class="section-title">Filmu izvēle</h2>
-
+                    <h2 class="section-title">Pieejamie seansi</h2>
                 </div>
 
-                <v-card
-                    v-if="moviesLoading"
-                    class="empty-state-card rounded-xl pa-6 pa-md-8 text-center"
-                >
-                    <v-progress-circular indeterminate color="#E50914" size="44" class="mb-4" />
-                    <h3 class="empty-state-title mb-2">Filmas tiek ielādētas</h3>
-                    <p class="empty-state-copy mb-0">Lūdzu uzgaidi, kamēr saņemam repertuāru no servera.</p>
-                </v-card>
-
-                <v-alert
-                    v-else-if="moviesError"
-                    type="error"
-                    variant="tonal"
-                    class="empty-state-card rounded-xl mb-6"
-                >
-                    <div class="d-flex align-center justify-space-between flex-wrap ga-3">
-                        <span>{{ moviesError }}</span>
-                        <v-btn
-                            color="#E50914"
-                            rounded="lg"
-                            class="text-none"
-                            :loading="moviesLoading"
-                            @click="fetchMovies"
-                        >
-                            Mēģināt vēlreiz
-                        </v-btn>
-                    </div>
-                </v-alert>
-
-                <v-row v-else-if="filteredMovies.length">
+                <v-row v-if="movie.screenings.length">
                     <v-col
-                        v-for="movie in filteredMovies"
-                        :key="movie.id"
+                        v-for="screening in movie.screenings"
+                        :key="screening.id"
                         cols="12"
                         sm="6"
                         lg="4"
                     >
-                        <v-card class="movie-card h-100 rounded-xl">
-                            <v-img :src="movie.poster" height="230" cover />
-                            <v-card-text>
-                                <div class="d-flex justify-space-between align-center mb-2">
-                                    <h3 class="movie-title">{{ movie.title }}</h3>
-                                    <v-chip size="small" class="movie-price-chip">
-                                        no {{ movie.price ?? '-' }} EUR
-                                    </v-chip>
-                                </div>
-                                <p class="text-caption movie-meta mb-2">
-                                    Režisors: {{ movie.director }} | {{ movie.duration ?? '-' }} min
-                                </p>
-                                <div class="d-flex flex-wrap ga-2 mb-2">
-                                    <v-chip size="small" variant="outlined">{{ movie.genre }}</v-chip>
-                                    <v-chip size="small" variant="outlined">{{ movie.ageRating }}</v-chip>
-                                </div>
-                                <v-rating
-                                    :model-value="movie.rating"
-                                    half-increments
-                                    readonly
-                                    density="compact"
-                                    color="#FFD166"
-                                />
-                                <div class="movie-session-row mt-4">
-                                    <span>Nākamais seanss: {{ movie.nextSession || 'Nav ieplānots' }}</span>
-                                    <span>{{ (movie.formats || []).join(' | ') }}</span>
-                                </div>
-                            </v-card-text>
-                            <v-card-actions class="px-4 pb-4">
-                                <v-btn
-                                    color="#E50914"
-                                    block
-                                    rounded="lg"
-                                    class="text-none reserve-btn"
-                                    append-icon="mdi-arrow-right"
-                                    :to="`/filmas/${movie.id}`"
-                                >
-                                    Skatīt detaļas
-                                </v-btn>
-                            </v-card-actions>
+                        <v-card class="screening-card h-100 rounded-xl pa-4">
+                            <div class="d-flex align-center justify-space-between mb-3">
+                                <v-chip size="small" color="#E50914" variant="flat">
+                                    {{ screening.date }}
+                                </v-chip>
+                                <v-chip size="small" variant="outlined" class="detail-chip">
+                                    {{ screening.price }} EUR
+                                </v-chip>
+                            </div>
+                            <h3 class="screening-title mb-3">{{ movie.title }}</h3>
+                            <p class="screening-meta mb-2">
+                                <v-icon size="16" class="mr-1">mdi-clock-outline</v-icon>{{ screening.time }}
+                            </p>
+                            <p class="screening-meta mb-4">
+                                <v-icon size="16" class="mr-1">mdi-sofa-outline</v-icon>{{ screening.hall }}
+                            </p>
+                            <v-btn
+                                color="#E50914"
+                                block
+                                rounded="lg"
+                                class="text-none reserve-btn"
+                                :to="`/rezervacijas/seanss/${screening.id}`"
+                            >
+                                Rezervēt biļeti
+                            </v-btn>
                         </v-card>
                     </v-col>
                 </v-row>
 
-                <v-card
-                    v-else
-                    class="empty-state-card rounded-xl pa-6 pa-md-8 text-center"
-                >
+                <v-card v-else class="empty-state-card rounded-xl pa-6 pa-md-8 text-center">
                     <div class="empty-state-icon mb-4">
-                        <v-icon size="34">mdi-movie-search-outline</v-icon>
+                        <v-icon size="34">mdi-calendar-remove-outline</v-icon>
                     </div>
-                    <h3 class="empty-state-title mb-2">Nav atrastu filmu</h3>
-                    <p class="empty-state-copy mb-5">
-                        Pamēģini notīrīt filtrus vai mainīt meklēšanas frāzi, lai redzētu visu repertuāru.
+                    <h3 class="empty-state-title mb-2">Seansi nav ieplānoti</h3>
+                    <p class="empty-state-copy mb-0">
+                        Šai filmai šobrīd nav pieejamu seansu. Pārbaudi vēlāk vai apskati citas filmas.
                     </p>
-                    <v-btn
-                        color="#E50914"
-                        rounded="lg"
-                        class="text-none"
-                        prepend-icon="mdi-refresh"
-                        @click="resetFilters"
-                    >
-                        Notīrīt filtrus
-                    </v-btn>
                 </v-card>
-
             </v-container>
         </v-main>
 
@@ -448,13 +428,11 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
-import { RouterLink } from 'vue-router'
+import { computed, onMounted, ref, watch } from 'vue'
+import { RouterLink, useRoute } from 'vue-router'
 
+const route = useRoute()
 const drawer = ref(false)
-const searchQuery = ref('')
-const selectedGenre = ref('Visi')
-const sortBy = ref('Reitings')
 const authDialog = ref(false)
 const authMode = ref('login')
 const authLoading = ref(false)
@@ -462,6 +440,10 @@ const authError = ref('')
 const authSuccess = ref('')
 const loginForm = ref({ email: '', password: '' })
 const registerForm = ref({ name: '', email: '', password: '', confirmPassword: '' })
+const movie = ref(null)
+const movieLoading = ref(false)
+const movieError = ref('')
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'
 
 const menuGroups = [
     {
@@ -490,102 +472,76 @@ const footerNavLinks = [
     { title: 'Kontakti', to: '/kontakti' },
 ]
 const footerUserLinks = ['Mans profils', 'Rezervācijas', 'Atbalsts', 'Privātuma politika']
-
 const socialIcons = ['mdi-facebook', 'mdi-instagram', 'mdi-youtube', 'mdi-twitter']
 
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'
-const movies = ref([])
-const moviesLoading = ref(false)
-const moviesError = ref('')
+const movieId = computed(() => route.params.id)
 
-const normalizeMovie = (movie) => ({
-    id: movie.id,
-    title: movie.title,
-    director: movie.director,
-    duration: movie.duration,
-    genre: movie.genre,
-    ageRating: movie.ageRating,
-    rating: movie.rating,
-    price: movie.price,
-    poster: movie.poster,
-    nextSession: movie.nextSession,
-    formats: movie.formats || [],
-    description: movie.description,
+const formatDateTime = (value) => {
+    if (!value) return 'Nav ieplānots'
+
+    return String(value).replace('T', ' ').slice(0, 16)
+}
+
+const normalizeScreening = (screening) => ({
+    id: screening.id,
+    date: screening.screening_date || screening.date || screening.datetime?.slice(0, 10) || 'Datums nav norādīts',
+    time: screening.screening_time || screening.time || screening.datetime?.slice(11, 16) || 'Laiks nav norādīts',
+    price: screening.price ?? screening.cost ?? '-',
+    hall: screening.hall?.name || (typeof screening.hall === 'string' ? screening.hall : 'Zāle nav norādīta'),
 })
 
-const fetchMovies = async () => {
-    moviesLoading.value = true
-    moviesError.value = ''
+const normalizeMovie = (payload) => {
+    const genres = Array.isArray(payload.genres)
+        ? payload.genres.map((genre) => genre.name || genre).filter(Boolean)
+        : [payload.genre].filter(Boolean)
+    const screenings = Array.isArray(payload.screenings) ? payload.screenings.map(normalizeScreening) : []
+    const nextScreening = payload.next_screening?.datetime ||
+        [payload.next_screening?.date, payload.next_screening?.time].filter(Boolean).join(' ') ||
+        payload.nextSession
+
+    return {
+        id: payload.id,
+        title: payload.title || payload.name || 'Filmas nosaukums nav pieejams',
+        description: payload.description || 'Apraksts šobrīd nav pieejams.',
+        director: payload.director || 'Nav norādīts',
+        duration: payload.duration ?? payload.length ?? '-',
+        genresLabel: genres.length ? genres.join(', ') : 'Nav norādīts',
+        ageRating: payload.ageRating || payload.age_restriction || 'Nav norādīts',
+        rating: Number(payload.rating ?? payload.average_rating) || 0,
+        price: payload.price ?? payload.lowest_price ?? payload.minPrice ?? '-',
+        poster: payload.poster || payload.image || '',
+        nextScreeningLabel: formatDateTime(nextScreening),
+        screenings,
+    }
+}
+
+const fetchMovie = async () => {
+    movieLoading.value = true
+    movieError.value = ''
 
     try {
-        const response = await fetch(`${apiBaseUrl}/api/movies`, {
+        const response = await fetch(`${apiBaseUrl}/api/movies/${movieId.value}`, {
             headers: {
                 Accept: 'application/json',
             },
         })
 
         if (!response.ok) {
-            throw new Error('Neizdevās ielādēt filmas no servera.')
+            throw new Error('Neizdevās ielādēt filmas detaļas.')
         }
 
         const data = await response.json()
-        movies.value = data.map(normalizeMovie)
+        movie.value = normalizeMovie(data)
     } catch (error) {
-        movies.value = []
-        moviesError.value = error.message || 'Neizdevās ielādēt filmas no servera.'
+        movie.value = null
+        movieError.value = error.message || 'Neizdevās ielādēt filmas detaļas.'
     } finally {
-        moviesLoading.value = false
+        movieLoading.value = false
     }
 }
 
-onMounted(fetchMovies)
-
-const genreOptions = computed(() => ['Visi', ...new Set(movies.value.map((movie) => movie.genre).filter(Boolean))])
-const sortOptions = ['Reitings', 'Cena augoši', 'Cena dilstoši', 'Ilgums']
-const quickGenres = computed(() => genreOptions.value.filter((genre) => genre !== 'Visi').slice(0, 4))
-
-const filteredMovies = computed(() => {
-    const query = searchQuery.value.trim().toLowerCase()
-
-    const result = movies.value.filter((movie) => {
-        const matchesQuery =
-            !query ||
-            movie.title?.toLowerCase().includes(query) ||
-            movie.director?.toLowerCase().includes(query)
-        const matchesGenre = selectedGenre.value === 'Visi' || movie.genre === selectedGenre.value
-
-        return matchesQuery && matchesGenre
-    })
-
-    return result.sort((a, b) => {
-        if (sortBy.value === 'Cena augoši') return (a.price ?? 0) - (b.price ?? 0)
-        if (sortBy.value === 'Cena dilstoši') return (b.price ?? 0) - (a.price ?? 0)
-        if (sortBy.value === 'Ilgums') return (b.duration ?? 0) - (a.duration ?? 0)
-        return (b.rating ?? 0) - (a.rating ?? 0)
-    })
-})
-
-const featuredMovie = computed(() => filteredMovies.value[0] || movies.value[0])
-const resultsLabel = computed(() =>
-    filteredMovies.value.length === 1 ? '1 filma atlasē' : `${filteredMovies.value.length} filmas atlasē`
-)
-const activeFilters = computed(() => {
-    const filters = []
-
-    if (searchQuery.value.trim()) {
-        filters.push({ key: 'search', label: `Meklējums: ${searchQuery.value.trim()}` })
-    }
-
-    if (selectedGenre.value !== 'Visi') {
-        filters.push({ key: 'genre', label: selectedGenre.value })
-    }
-
-    if (sortBy.value !== 'Reitings') {
-        filters.push({ key: 'sort', label: `Kārtot: ${sortBy.value}` })
-    }
-
-    return filters
-})
+onMounted(fetchMovie)
+watch(movieId, fetchMovie)
 
 const isEmailValid = (value) => /^\S+@\S+\.\S+$/.test(value)
 
@@ -652,18 +608,6 @@ const submitAuth = async () => {
             ? 'Pieslēgšanās forma gatava. Nākamais solis: savienot ar Laravel API.'
             : 'Reģistrācijas forma gatava. Nākamais solis: savienot ar Laravel API.'
 }
-
-const resetFilters = () => {
-    searchQuery.value = ''
-    selectedGenre.value = 'Visi'
-    sortBy.value = 'Reitings'
-}
-
-const removeFilter = (key) => {
-    if (key === 'search') searchQuery.value = ''
-    if (key === 'genre') selectedGenre.value = 'Visi'
-    if (key === 'sort') sortBy.value = 'Reitings'
-}
 </script>
 
 <style scoped>
@@ -676,8 +620,7 @@ const removeFilter = (key) => {
 }
 
 .hero-panel,
-.filter-card,
-.movie-card,
+.screening-card,
 .empty-state-card {
     animation: subtle-fade-in 0.42s ease both;
 }
@@ -729,14 +672,16 @@ const removeFilter = (key) => {
     color: #f4f6fb;
 }
 
-.nav-link-btn {
+.nav-link-btn,
+.back-link {
     color: #d7dff2;
     border: 1px solid transparent;
     transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease,
         box-shadow 0.2s ease;
 }
 
-.nav-link-btn:hover {
+.nav-link-btn:hover,
+.back-link:hover {
     color: #ffffff;
     background: rgba(255, 255, 255, 0.08);
     border-color: rgba(255, 255, 255, 0.16);
@@ -774,10 +719,7 @@ const removeFilter = (key) => {
 .auth-dialog-card :deep(.v-field),
 .auth-dialog-card :deep(.v-label),
 .auth-dialog-card :deep(.v-field__input),
-.auth-dialog-card :deep(.v-icon) {
-    color: #edf2ff;
-}
-
+.auth-dialog-card :deep(.v-icon),
 .auth-dialog-card :deep(.v-card-title),
 .auth-dialog-card :deep(.v-card-text),
 .auth-dialog-card :deep(.v-btn),
@@ -841,19 +783,6 @@ const removeFilter = (key) => {
     pointer-events: none;
 }
 
-.hero-section::after {
-    content: '';
-    position: absolute;
-    width: 440px;
-    height: 440px;
-    right: -120px;
-    bottom: -220px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(255, 76, 100, 0.3) 0%, rgba(255, 76, 100, 0) 70%);
-    filter: blur(14px);
-    pointer-events: none;
-}
-
 .hero-panel {
     position: relative;
     z-index: 1;
@@ -876,137 +805,45 @@ const removeFilter = (key) => {
     color: #d7e2ff;
 }
 
-.hero-title {
-    max-width: 12ch;
+.detail-title {
+    max-width: 16ch;
     font-size: clamp(2rem, 4vw, 3.6rem);
     line-height: 1.05;
     letter-spacing: -0.02em;
 }
 
-.hero-subtitle {
-    max-width: 64ch;
+.detail-description {
+    max-width: 72ch;
     color: #d2d9e7;
+    line-height: 1.7;
 }
 
-.hero-chip {
+.detail-muted {
+    color: #c8d0df;
+}
+
+.detail-poster {
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    box-shadow: 0 24px 42px rgba(0, 0, 0, 0.34);
+}
+
+.detail-facts {
     color: #f4f6fb;
-    border-color: rgba(255, 255, 255, 0.24);
 }
 
-.hero-feature-card {
-    background: linear-gradient(180deg, #141926, #0f131d);
+.fact-label {
+    display: block;
+    margin-bottom: 4px;
+    color: #9eabc4;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
 }
 
 .section-title {
     font-size: clamp(1.2rem, 2vw, 1.8rem);
     font-weight: 700;
-}
-
-.filter-card {
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 14px 34px rgba(4, 7, 12, 0.22);
-}
-
-.filter-kicker {
-    color: #acb7cf;
-    letter-spacing: 0.08em;
-}
-
-.filter-card :deep(.v-field),
-.filter-card :deep(.v-label),
-.filter-card :deep(.v-field__input),
-.filter-card :deep(.v-select__selection-text),
-.filter-card :deep(.v-icon) {
-    color: #f4f6fb;
-}
-
-.filter-card :deep(.v-label.v-field-label) {
-    opacity: 0.85;
-}
-
-.active-filters {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    align-items: center;
-}
-
-.active-filter-chip {
-    color: #d7dff2;
-    border-color: rgba(255, 255, 255, 0.22);
-    background: rgba(255, 255, 255, 0.04);
-    transition: transform 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
-}
-
-.active-filter-chip:hover {
-    transform: translateY(-1px);
-    border-color: rgba(255, 255, 255, 0.32);
-    background: rgba(255, 255, 255, 0.07);
-}
-
-.reset-filters-inline {
-    min-height: 28px;
-    padding-inline: 2px;
-    color: #ff5a44;
-    font-size: 0.84rem;
-    font-weight: 700;
-    line-height: 1;
-    opacity: 0.94;
-    transition: color 0.2s ease, opacity 0.2s ease, transform 0.2s ease, filter 0.2s ease;
-}
-
-.reset-filters-inline:hover {
-    transform: translateY(-1px);
-    color: #ff7a70;
-    opacity: 1;
-    filter: brightness(1.04);
-}
-
-.reset-filters-inline:deep(.v-btn__content),
-.reset-filters-inline:deep(.v-icon) {
-    color: inherit;
-    align-items: center;
-    line-height: 1;
-}
-
-.reset-filters-inline:deep(.v-btn__overlay) {
-    opacity: 0;
-}
-
-.results-chip {
-    font-weight: 700;
-}
-
-.results-copy {
-    color: #bbc5d8;
-    font-size: 0.94rem;
-}
-
-.movie-card {
-    border: 1px solid rgba(255, 255, 255, 0.09);
-    background: linear-gradient(180deg, #141926, #0f131d);
-    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, filter 0.2s ease;
-}
-
-.movie-card :deep(.v-card-text),
-.movie-card :deep(.v-chip) {
-    color: #f4f6fb;
-}
-
-.movie-card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 24px 42px rgba(0, 0, 0, 0.34);
-    border-color: rgba(255, 255, 255, 0.18);
-    filter: brightness(1.02);
-}
-
-.movie-title {
-    font-size: 1.1rem;
-    line-height: 1.2;
-}
-
-.movie-meta {
-    color: #d6def0;
 }
 
 .movie-price-chip {
@@ -1017,12 +854,9 @@ const removeFilter = (key) => {
     box-shadow: 0 8px 20px rgba(23, 167, 95, 0.35);
 }
 
-.movie-session-row {
-    display: flex;
-    justify-content: space-between;
-    gap: 12px;
-    font-size: 0.86rem;
-    color: #d0d7e6;
+.detail-chip {
+    color: #f4f6fb;
+    border-color: rgba(255, 255, 255, 0.24);
 }
 
 .reserve-btn {
@@ -1045,9 +879,30 @@ const removeFilter = (key) => {
     filter: brightness(1.08);
 }
 
-.movie-card:hover .reserve-btn {
-    box-shadow: 0 16px 30px rgba(229, 9, 20, 0.58), 0 0 28px rgba(91, 112, 255, 0.16);
-    filter: brightness(1.1);
+.outline-btn {
+    color: #edf2ff;
+    border-color: rgba(255, 255, 255, 0.28);
+}
+
+.screening-card,
+.empty-state-card {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: linear-gradient(180deg, #141926, #0f131d);
+}
+
+.screening-card :deep(.v-card-text),
+.screening-card :deep(.v-chip) {
+    color: #f4f6fb;
+}
+
+.screening-title {
+    color: #ffffff;
+    font-size: 1.1rem;
+    line-height: 1.2;
+}
+
+.screening-meta {
+    color: #d6def0;
 }
 
 .drawer-list :deep(.v-list-item-title) {
@@ -1093,11 +948,6 @@ const removeFilter = (key) => {
     transform: translateX(2px);
 }
 
-.drawer-list :deep(.v-list-item:active) {
-    background: rgba(229, 9, 20, 0.1);
-    transform: translateX(1px);
-}
-
 .drawer-list :deep(.v-list-item--active) {
     background: rgba(229, 9, 20, 0.08);
     border-color: transparent;
@@ -1105,13 +955,9 @@ const removeFilter = (key) => {
 }
 
 .drawer-list :deep(.v-list-item--active .v-list-item-title),
-.drawer-list :deep(.v-list-item--active .v-icon) {
-    color: #ffffff;
-}
-
+.drawer-list :deep(.v-list-item--active .v-icon),
 .drawer-list :deep(.v-icon) {
     color: #eef3ff;
-    opacity: 1;
 }
 
 .drawer-close-btn {
@@ -1186,11 +1032,6 @@ const removeFilter = (key) => {
     text-align: center;
 }
 
-.empty-state-card {
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    background: linear-gradient(180deg, #141926, #0f131d);
-}
-
 .empty-state-icon {
     display: inline-flex;
     align-items: center;
@@ -1213,24 +1054,9 @@ const removeFilter = (key) => {
     color: #c8d0df;
 }
 
-.movie-card :deep(.v-card-text) {
-    padding: 20px 20px 12px;
-}
-
-.movie-card :deep(.v-card-actions) {
-    padding: 0 20px 20px !important;
-}
-
 :deep(.v-btn) {
     transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease, background-color 0.2s ease,
         border-color 0.2s ease;
-}
-
-.hero-section,
-.filter-card,
-.movie-card,
-.site-footer {
-    transition: box-shadow 0.2s ease, transform 0.2s ease, opacity 0.2s ease;
 }
 
 @keyframes subtle-fade-in {
@@ -1244,14 +1070,8 @@ const removeFilter = (key) => {
     }
 }
 
-@media (max-width: 960px) {
-    .movie-session-row {
-        flex-direction: column;
-    }
-}
-
 @media (max-width: 600px) {
-    .hero-title {
+    .detail-title {
         max-width: 100%;
     }
 }

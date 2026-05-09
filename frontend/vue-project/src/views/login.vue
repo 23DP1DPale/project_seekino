@@ -1,0 +1,216 @@
+<template>
+  <v-app class="auth-page">
+    <v-app-bar color="#101114" flat location="top" height="76" class="sticky-app-bar app-bar-shell">
+      <v-container class="d-flex align-center px-2 px-md-6 app-bar-inner">
+        <RouterLink to="/" class="brand-link ml-2">
+          <v-img src="/img/logo_seekino.png" width="160" height="52" class="logo brand-logo" />
+        </RouterLink>
+
+        <v-spacer />
+
+        <div class="d-none d-sm-flex ga-2 mr-2">
+          <v-btn variant="text" class="text-none nav-link-btn" to="/filmas">Filmas</v-btn>
+          <v-btn variant="text" class="text-none nav-link-btn" to="/seansi">Seansi</v-btn>
+        </div>
+
+        <v-btn rounded="xl" class="text-none login-btn" prepend-icon="mdi-account-plus-outline" to="/register">
+          Reģistrēties
+        </v-btn>
+      </v-container>
+    </v-app-bar>
+
+    <v-main class="auth-main">
+      <v-container class="auth-container py-10 py-md-14">
+        <v-card class="auth-card pa-5 pa-md-7 rounded-xl">
+          <p class="auth-badge">SEEKINO konts</p>
+          <h1 class="auth-title mb-2">Pieslēgties</h1>
+          <p class="auth-copy mb-6">Ievadi savus datus, lai turpinātu ar rezervācijām un profilu.</p>
+
+          <v-alert v-if="error" type="error" variant="tonal" class="mb-4">
+            {{ error }}
+          </v-alert>
+
+          <v-form @submit.prevent="submit">
+            <v-text-field
+              v-model="form.email"
+              label="E-pasts"
+              type="email"
+              variant="outlined"
+              prepend-inner-icon="mdi-email-outline"
+              class="mb-3"
+              :disabled="authLoading"
+            />
+            <v-text-field
+              v-model="form.password"
+              label="Parole"
+              type="password"
+              variant="outlined"
+              prepend-inner-icon="mdi-lock-outline"
+              class="mb-4"
+              :disabled="authLoading"
+            />
+
+            <v-btn
+              type="submit"
+              color="#E50914"
+              block
+              rounded="lg"
+              size="large"
+              class="text-none auth-submit"
+              :loading="authLoading"
+            >
+              Pieslēgties
+            </v-btn>
+          </v-form>
+
+          <p class="auth-footnote mt-5 mb-0">
+            Nav konta?
+            <RouterLink to="/register" class="auth-link">Reģistrēties</RouterLink>
+          </p>
+        </v-card>
+      </v-container>
+    </v-main>
+  </v-app>
+</template>
+
+<script setup>
+import { ref } from 'vue'
+import { RouterLink, useRouter } from 'vue-router'
+import { useAuth } from '@/services/auth'
+
+const router = useRouter()
+const { authLoading, login } = useAuth()
+const form = ref({ email: '', password: '' })
+const error = ref('')
+
+const isEmailValid = (value) => /^\S+@\S+\.\S+$/.test(value)
+
+const submit = async () => {
+  error.value = ''
+
+  if (!form.value.email || !form.value.password) {
+    error.value = 'Lūdzu aizpildi e-pastu un paroli.'
+    return
+  }
+
+  if (!isEmailValid(form.value.email)) {
+    error.value = 'E-pasta adrese nav pareiza.'
+    return
+  }
+
+  try {
+    await login(form.value)
+    router.push('/')
+  } catch (err) {
+    error.value = err.message || 'Pieslēgšanās neizdevās.'
+  }
+}
+</script>
+
+<style scoped>
+.auth-page {
+  background:
+    radial-gradient(circle at 18% 14%, rgba(50, 83, 148, 0.34), transparent 34%),
+    radial-gradient(circle at 82% 18%, rgba(176, 38, 68, 0.28), transparent 32%),
+    #0a0c12;
+  color: #f4f6fb;
+}
+
+.sticky-app-bar {
+  position: sticky !important;
+  top: 0;
+  z-index: 1100;
+}
+
+.app-bar-shell {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(11, 14, 22, 0.86) !important;
+  backdrop-filter: blur(10px);
+}
+
+.app-bar-inner {
+  min-height: 76px;
+}
+
+.logo {
+  filter: invert(1);
+}
+
+.brand-link {
+  display: inline-flex;
+  align-items: center;
+  width: 160px;
+  min-width: 160px;
+  text-decoration: none;
+}
+
+.nav-link-btn {
+  color: #d7dff2;
+}
+
+.login-btn,
+.auth-submit {
+  background: linear-gradient(135deg, #ff5a44, #e50914);
+  color: #ffffff !important;
+  font-weight: 700;
+  box-shadow: 0 8px 26px rgba(229, 9, 20, 0.36);
+}
+
+.auth-main {
+  min-height: calc(100vh - 76px);
+}
+
+.auth-container {
+  display: grid;
+  min-height: calc(100vh - 76px);
+  place-items: center;
+}
+
+.auth-card {
+  width: min(100%, 520px);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: linear-gradient(165deg, rgba(18, 23, 36, 0.96), rgba(12, 15, 24, 0.96));
+  color: #edf2ff;
+  box-shadow: 0 22px 58px rgba(0, 0, 0, 0.38);
+}
+
+.auth-card :deep(.v-field),
+.auth-card :deep(.v-label),
+.auth-card :deep(.v-field__input),
+.auth-card :deep(.v-icon),
+.auth-card :deep(.v-alert__content) {
+  color: #edf2ff;
+}
+
+.auth-badge {
+  display: inline-block;
+  margin-bottom: 10px;
+  padding: 6px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+  color: #d7e2ff;
+  font-size: 12px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.auth-title {
+  font-size: clamp(2rem, 5vw, 3rem);
+  line-height: 1.05;
+}
+
+.auth-copy,
+.auth-footnote {
+  color: #d2d9e7;
+}
+
+.auth-link {
+  color: #ff5a44;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.auth-link:hover {
+  text-decoration: underline;
+}
+</style>

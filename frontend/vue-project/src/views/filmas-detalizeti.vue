@@ -22,19 +22,36 @@
 
                 <v-spacer />
 
-                <div class="d-none d-sm-flex ga-2 mr-2">
+                <div class="ga-2 mr-2 nav-pages">
                     <v-btn variant="text" class="text-none nav-link-btn" to="/filmas">Filmas</v-btn>
                     <v-btn variant="text" class="text-none nav-link-btn" to="/seansi">Seansi</v-btn>
                 </div>
 
-                <v-btn
-                    rounded="xl"
-                    class="text-none login-btn"
-                    prepend-icon="mdi-account-circle-outline"
-                    @click="openAuth('login')"
-                >
-                    Pieslēgties
-                </v-btn>
+                <template v-if="isAuthenticated">
+                    <v-chip class="user-chip mr-2" prepend-icon="mdi-account-circle-outline">
+                        {{ user?.nickname }}
+                    </v-chip>
+                    <v-btn
+                        rounded="xl"
+                        class="text-none login-btn"
+                        prepend-icon="mdi-logout"
+                        :loading="navAuthLoading"
+                        @click="logout"
+                    >
+                        Izrakstīties
+                    </v-btn>
+                </template>
+                <template v-else>
+                    <v-btn variant="text" class="text-none nav-link-btn" to="/register">Reģistrēties</v-btn>
+                    <v-btn
+                        rounded="xl"
+                        class="text-none login-btn"
+                        prepend-icon="mdi-account-circle-outline"
+                        to="/login"
+                    >
+                        Pieslēgties
+                    </v-btn>
+                </template>
             </v-container>
         </v-app-bar>
 
@@ -438,9 +455,11 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
+import { useAuth } from '@/services/auth'
 
 const route = useRoute()
 const drawer = ref(false)
+const { user, isAuthenticated, authLoading: navAuthLoading, logout } = useAuth()
 const authDialog = ref(false)
 const authMode = ref('login')
 const authLoading = ref(false)
@@ -769,6 +788,7 @@ const submitAuth = async () => {
 }
 
 .login-btn {
+    margin-left: 5px;
     background: linear-gradient(135deg, #ff5a44, #e50914);
     color: #ffffff !important;
     font-weight: 700;
@@ -787,6 +807,16 @@ const submitAuth = async () => {
     transform: scale(1.03);
     box-shadow: 0 8px 30px rgba(229, 9, 20, 0.5), 0 0 24px rgba(108, 132, 255, 0.14);
     filter: brightness(1.07);
+}
+
+.nav-pages {
+    display: none;
+}
+
+@media (min-width: 700px) {
+    .nav-pages {
+        display: flex;
+    }
 }
 
 .auth-dialog-card {

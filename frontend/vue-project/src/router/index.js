@@ -5,6 +5,8 @@ import FilmasDetalizeti from '@/views/filmas-detalizeti.vue'
 import Reservation from '@/views/reservation.vue'
 import Seansi from '@/views/seansi.vue'
 import Kontakti from '@/views/kontakti.vue'
+import Login from '@/views/login.vue'
+import Register from '@/views/register.vue'
 
 const routes = [
   {
@@ -36,6 +38,16 @@ const routes = [
     path: '/kontakti',
     name: "Kontakti",
     component: Kontakti,
+  },
+  {
+    path: '/login',
+    name: 'Login',
+    component: Login,
+  },
+  {
+    path: '/register',
+    name: 'Register',
+    component: Register,
   }
 ]
 

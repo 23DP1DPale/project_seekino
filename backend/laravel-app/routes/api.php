@@ -6,3 +6,4 @@ use Illuminate\Support\Facades\Route;
 Route::get('/movies', [MovieController::class, 'index']);
 Route::get('/movies/{movie}', [MovieController::class, 'show']);
 Route::get('/screenings', [MovieController::class, 'screenings']);
+Route::get('/screenings/{screening}', [MovieController::class, 'showScreening']);

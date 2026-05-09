@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import Home from '../views/home.vue'
 import Filmas from '@/views/filmas.vue'
 import FilmasDetalizeti from '@/views/filmas-detalizeti.vue'
+import Reservation from '@/views/reservation.vue'
 import Seansi from '@/views/seansi.vue'
 import Kontakti from '@/views/kontakti.vue'
 
@@ -20,6 +21,11 @@ const routes = [
     path: '/filmas/:id',
     name: 'FilmasDetalizeti',
     component: FilmasDetalizeti,
+  },
+  {
+    path: '/reservation/:screeningId',
+    name: 'Reservation',
+    component: Reservation,
   },
   {
     path: '/seansi',

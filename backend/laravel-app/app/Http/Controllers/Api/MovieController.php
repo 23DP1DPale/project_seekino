@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 class MovieController extends Controller
 {
@@ -87,6 +88,55 @@ class MovieController extends Controller
         return response()->json(
             $screenings->map(fn (Screening $screening): array => $this->screeningResponse($screening))->values()
         );
+    }
+
+    public function showScreening(Screening $screening): JsonResponse
+    {
+        $screening->load([
+            'cinemaHall',
+            'movieRecord',
+        ]);
+
+        $hall = $this->hallFor($screening);
+        $movie = $this->movieFor($screening);
+        $reservedSeatIds = DB::table('reservations_seats')
+            ->where('screening', $screening->id)
+            ->pluck('seat')
+            ->map(fn ($seat): int => (int) $seat)
+            ->all();
+
+        $seats = $hall
+            ? DB::table('seats')
+                ->where('hall', $hall->id)
+                ->orderBy('row_number')
+                ->orderBy('seat_number')
+                ->get()
+                ->map(fn ($seat): array => [
+                    'id' => (int) $seat->id,
+                    'row_number' => (int) $seat->row_number,
+                    'seat_number' => (int) $seat->seat_number,
+                    'is_reserved' => in_array((int) $seat->id, $reservedSeatIds, true),
+                ])
+                ->values()
+            : collect();
+
+        return response()->json([
+            'id' => $screening->id,
+            'date' => $screening->screening_date?->format('Y-m-d'),
+            'time' => $screening->screening_time,
+            'price' => (float) $screening->cost,
+            'movie' => $movie ? [
+                'id' => $movie->id,
+                'name' => $movie->name,
+                'title' => $movie->name,
+                'poster' => $this->posterFor($movie->id),
+            ] : null,
+            'hall' => $hall ? [
+                'id' => $hall->id,
+                'name' => $hall->name,
+            ] : null,
+            'seats' => $seats,
+        ]);
     }
 
     private function movieResponse(Movie $movie, bool $includeDetails = false): array

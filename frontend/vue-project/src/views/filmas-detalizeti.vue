@@ -349,11 +349,11 @@
                                     <v-icon size="16" class="mr-1">mdi-sofa-outline</v-icon>{{ screening.hall }}
                                 </p>
                                 <v-btn
-                                    :color="selectedScreeningId === screening.id ? '#24b26b' : '#E50914'"
+                                    color="#E50914"
                                     block
                                     rounded="lg"
                                     class="text-none reserve-btn"
-                                    @click="selectScreening(screening)"
+                                    :to="`/reservation/${screening.id}`"
                                 >
                                     Rezervēt biļeti
                                 </v-btn>
@@ -975,7 +975,7 @@ const submitAuth = async () => {
 }
 
 .screening-choice-card {
-    cursor: pointer;
+
     transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, filter 0.2s ease;
 }
 

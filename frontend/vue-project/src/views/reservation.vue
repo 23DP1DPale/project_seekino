@@ -205,6 +205,24 @@
 
                 <template v-else-if="screening">
                     <div class="reservation-panel pa-5 pa-md-7 mb-6">
+                        <v-alert
+                            v-if="reservationSuccess"
+                            type="success"
+                            variant="tonal"
+                            class="mb-4"
+                        >
+                            {{ reservationSuccess }}
+                        </v-alert>
+
+                        <v-alert
+                            v-if="reservationError"
+                            type="error"
+                            variant="tonal"
+                            class="mb-4"
+                        >
+                            {{ reservationError }}
+                        </v-alert>
+
                         <div class="d-flex align-center justify-space-between flex-wrap ga-3 mb-5">
                             <div>
                                 <p class="hero-badge">SEEKINO rezervācija</p>
@@ -224,7 +242,11 @@
                                             :key="seat.id"
                                             type="button"
                                             class="seat-button"
-                                            :class="{ 'seat-button--selected': selectedSeatIds.includes(seat.id) }"
+                                            :class="{
+                                                'seat-button--selected': selectedSeatIds.includes(seat.id),
+                                                'seat-button--reserved': seat.isReserved,
+                                            }"
+                                            :disabled="seat.isReserved"
                                             @click="toggleSeat(seat.id)"
                                         >
                                             {{ seat.label }}
@@ -277,9 +299,11 @@
                                         rounded="lg"
                                         size="large"
                                         class="text-none reserve-btn"
-                                        :disabled="selectedSeats.length === 0"
+                                        :disabled="selectedSeats.length === 0 || reservationLoading"
+                                        :loading="reservationLoading"
+                                        @click="submitReservation"
                                     >
-                                        Apstiprināt rezervāciju
+                                        {{ reservationLoading ? 'Rezervē...' : 'Apstiprināt rezervāciju' }}
                                     </v-btn>
                                 </v-card>
                             </v-col>
@@ -372,6 +396,9 @@ const loginForm = ref({ email: '', password: '' })
 const registerForm = ref({ name: '', email: '', password: '', confirmPassword: '' })
 const loading = ref(false)
 const error = ref('')
+const reservationLoading = ref(false)
+const reservationError = ref('')
+const reservationSuccess = ref('')
 const screening = ref(null)
 const selectedSeatIds = ref([])
 const menuGroups = [
@@ -403,7 +430,11 @@ const footerUserLinks = ['Mans profils', 'Rezervācijas', 'Atbalsts', 'Privātum
 const socialIcons = ['mdi-facebook', 'mdi-instagram', 'mdi-youtube', 'mdi-twitter']
 
 const screeningId = computed(() => Number(route.params.screeningId))
-const seatColumns = computed(() => (screening.value?.seatAmount || 0) > 24 ? 8 : 6)
+const seatColumns = computed(() => {
+    const maxSeatNumber = Math.max(...(screening.value?.seats || []).map((seat) => seat.seat_number), 0)
+
+    return maxSeatNumber || 6
+})
 
 const formatDate = (value) => {
     const [year, month, day] = String(value || '').slice(0, 10).split('-')
@@ -419,25 +450,18 @@ const normalizeScreening = (item) => ({
     date: formatDate(item.screening_date || item.date),
     time: formatTime(item.screening_time || item.time),
     hallName: item.hall?.name || 'Zāle nav norādīta',
-    seatAmount: item.hall?.seat_amount || 0,
     priceValue: Number(item.price ?? item.cost ?? 0),
     price: formatPrice(item.price ?? item.cost),
+    seats: (item.seats || []).map((seat) => ({
+        id: Number(seat.id),
+        row_number: Number(seat.row_number),
+        seat_number: Number(seat.seat_number),
+        isReserved: Boolean(seat.is_reserved),
+        label: `${String.fromCharCode(64 + Number(seat.row_number))}${seat.seat_number}`,
+    })),
 })
 
-const seats = computed(() => {
-    const amount = screening.value?.seatAmount || 0
-
-    return Array.from({ length: amount }, (_, index) => {
-        const rowIndex = Math.floor(index / seatColumns.value)
-        const seatNumber = (index % seatColumns.value) + 1
-        const rowLabel = String.fromCharCode(65 + rowIndex)
-
-        return {
-            id: index + 1,
-            label: `${rowLabel}${seatNumber}`,
-        }
-    })
-})
+const seats = computed(() => screening.value?.seats || [])
 
 const selectedSeats = computed(() => seats.value.filter((seat) => selectedSeatIds.value.includes(seat.id)))
 const totalPrice = computed(() => formatPrice(selectedSeats.value.length * (screening.value?.priceValue || 0)))
@@ -445,10 +469,11 @@ const totalPrice = computed(() => formatPrice(selectedSeats.value.length * (scre
 const fetchScreening = async () => {
     loading.value = true
     error.value = ''
+    reservationError.value = ''
     selectedSeatIds.value = []
 
     try {
-        const response = await fetch(`${apiBaseUrl}/api/screenings`, {
+        const response = await fetch(`${apiBaseUrl}/api/screenings/${screeningId.value}`, {
             headers: {
                 Accept: 'application/json',
             },
@@ -459,13 +484,7 @@ const fetchScreening = async () => {
         }
 
         const data = await response.json()
-        const found = Array.isArray(data) ? data.find((item) => Number(item.id) === screeningId.value) : null
-
-        if (!found) {
-            throw new Error('Seanss netika atrasts.')
-        }
-
-        screening.value = normalizeScreening(found)
+        screening.value = normalizeScreening(data)
     } catch (caughtError) {
         screening.value = null
         error.value = caughtError.message || 'Neizdevās ielādēt seansa informāciju.'
@@ -475,9 +494,53 @@ const fetchScreening = async () => {
 }
 
 const toggleSeat = (seatId) => {
+    const seat = seats.value.find((item) => item.id === seatId)
+
+    if (!seat || seat.isReserved || reservationLoading.value) {
+        return
+    }
+
     selectedSeatIds.value = selectedSeatIds.value.includes(seatId)
         ? selectedSeatIds.value.filter((id) => id !== seatId)
         : [...selectedSeatIds.value, seatId]
+}
+
+const submitReservation = async () => {
+    if (!selectedSeatIds.value.length || reservationLoading.value) {
+        return
+    }
+
+    reservationLoading.value = true
+    reservationError.value = ''
+    reservationSuccess.value = ''
+
+    try {
+        const response = await fetch(`${apiBaseUrl}/api/reservations`, {
+            method: 'POST',
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                screening_id: screeningId.value,
+                seat_ids: selectedSeatIds.value,
+            }),
+        })
+        const data = await response.json().catch(() => ({}))
+
+        if (!response.ok) {
+            throw new Error(data.message || 'Rezervāciju neizdevās izveidot.')
+        }
+
+        selectedSeatIds.value = []
+        await fetchScreening()
+        reservationSuccess.value = 'Rezervācija veiksmīgi izveidota!'
+    } catch (caughtError) {
+        reservationError.value = caughtError.message || 'Rezervāciju neizdevās izveidot.'
+        reservationSuccess.value = ''
+    } finally {
+        reservationLoading.value = false
+    }
 }
 
 const isEmailValid = (value) => /^\S+@\S+\.\S+$/.test(value)
@@ -788,6 +851,16 @@ watch(screeningId, fetchScreening)
     border-color: rgba(35, 145, 91, 0.95);
     background: linear-gradient(135deg, #167a4b, #0f5f3a);
     color: #ffffff;
+}
+
+.seat-button--reserved,
+.seat-button--reserved:hover {
+    cursor: not-allowed;
+    transform: none;
+    border-color: rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.035);
+    color: rgba(237, 242, 255, 0.38);
+    box-shadow: none;
 }
 
 .reservation-panel :deep(.v-card),

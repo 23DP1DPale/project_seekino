@@ -1,8 +1,14 @@
 <?php
 
+use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\MovieController;
 use App\Http\Controllers\Api\ReservationController;
 use Illuminate\Support\Facades\Route;
+
+Route::post('/register', [AuthController::class, 'register']);
+Route::post('/login', [AuthController::class, 'login']);
+Route::get('/me', [AuthController::class, 'me']);
+Route::post('/logout', [AuthController::class, 'logout']);
 
 Route::get('/movies', [MovieController::class, 'index']);
 Route::get('/movies/{movie}', [MovieController::class, 'show']);

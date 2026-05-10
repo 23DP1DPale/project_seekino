@@ -23,7 +23,7 @@
                 </div>
 
                 <template v-if="isAuthenticated">
-                    <v-chip class="user-chip mr-2" prepend-icon="mdi-account-circle-outline">
+                    <v-chip class="user-chip mr-2" prepend-icon="mdi-account-circle-outline" to="/profile" link>
                         {{ user?.nickname }}
                     </v-chip>
                     <v-btn
@@ -374,8 +374,9 @@
                         <v-list density="compact" class="footer-list pa-0">
                             <v-list-item
                                 v-for="link in footerUserLinks"
-                                :key="link"
-                                :title="link"
+                                :key="link.title"
+                                :to="link.to || undefined"
+                                :title="link.title"
                                 class="px-0"
                             />
                         </v-list>
@@ -405,7 +406,7 @@ import { useAuth } from '@/services/auth'
 const route = useRoute()
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'
 const drawer = ref(false)
-const { user, isAuthenticated, authLoading: navAuthLoading, logout } = useAuth()
+const { token, user, isAuthenticated, authLoading: navAuthLoading, logout } = useAuth()
 const authDialog = ref(false)
 const authMode = ref('login')
 const authLoading = ref(false)
@@ -433,8 +434,8 @@ const menuGroups = [
         title: 'Lietotājs',
         isLast: true,
         items: [
-            { title: 'Mans profils', icon: 'mdi-account-outline', to: '/profils' },
-            { title: 'Manas rezervācijas', icon: 'mdi-ticket-confirmation-outline', to: '/rezervacijas' },
+            { title: 'Mans profils', icon: 'mdi-account-outline', to: '/profile' },
+            { title: 'Manas rezervācijas', icon: 'mdi-ticket-confirmation-outline', to: '/profile' },
             { title: 'Kontakti', icon: 'mdi-phone-outline', to: '/kontakti' },
         ],
     },
@@ -445,7 +446,12 @@ const footerNavLinks = [
     { title: 'Seansi', to: '/seansi' },
     { title: 'Kontakti', to: '/kontakti' },
 ]
-const footerUserLinks = ['Mans profils', 'Rezervācijas', 'Atbalsts', 'Privātuma politika']
+const footerUserLinks = [
+    { title: 'Mans profils', to: '/profile' },
+    { title: 'Rezervācijas', to: '/profile' },
+    { title: 'Atbalsts' },
+    { title: 'Privātuma politika' },
+]
 const socialIcons = ['mdi-facebook', 'mdi-instagram', 'mdi-youtube', 'mdi-twitter']
 
 const screeningId = computed(() => Number(route.params.screeningId))
@@ -539,6 +545,7 @@ const submitReservation = async () => {
             headers: {
                 Accept: 'application/json',
                 'Content-Type': 'application/json',
+                ...(token.value ? { Authorization: `Bearer ${token.value}` } : {}),
             },
             body: JSON.stringify({
                 screening_id: screeningId.value,

@@ -6,6 +6,7 @@ import Reservation from '@/views/reservation.vue'
 import Seansi from '@/views/seansi.vue'
 import Kontakti from '@/views/kontakti.vue'
 import Login from '@/views/login.vue'
+import Profile from '@/views/profile.vue'
 import Register from '@/views/register.vue'
 
 const routes = [
@@ -43,6 +44,11 @@ const routes = [
     path: '/login',
     name: 'Login',
     component: Login,
+  },
+  {
+    path: '/profile',
+    name: 'Profile',
+    component: Profile,
   },
   {
     path: '/register',

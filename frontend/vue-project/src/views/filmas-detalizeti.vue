@@ -28,7 +28,7 @@
                 </div>
 
                 <template v-if="isAuthenticated">
-                    <v-chip class="user-chip mr-2" prepend-icon="mdi-account-circle-outline">
+                    <v-chip class="user-chip mr-2" prepend-icon="mdi-account-circle-outline" to="/profile" link>
                         {{ user?.nickname }}
                     </v-chip>
                     <v-btn
@@ -429,8 +429,9 @@
                         <v-list density="compact" class="footer-list pa-0">
                             <v-list-item
                                 v-for="link in footerUserLinks"
-                                :key="link"
-                                :title="link"
+                                :key="link.title"
+                                :to="link.to || undefined"
+                                :title="link.title"
                                 class="px-0"
                             />
                         </v-list>
@@ -487,8 +488,8 @@ const menuGroups = [
         title: 'Lietotājs',
         isLast: true,
         items: [
-            { title: 'Mans profils', icon: 'mdi-account-outline', to: '/profils' },
-            { title: 'Manas rezervācijas', icon: 'mdi-ticket-confirmation-outline', to: '/rezervacijas' },
+            { title: 'Mans profils', icon: 'mdi-account-outline', to: '/profile' },
+            { title: 'Manas rezervācijas', icon: 'mdi-ticket-confirmation-outline', to: '/profile' },
             { title: 'Kontakti', icon: 'mdi-phone-outline', to: '/kontakti' },
         ],
     },
@@ -500,7 +501,12 @@ const footerNavLinks = [
     { title: 'Seansi', to: '/seansi' },
     { title: 'Kontakti', to: '/kontakti' },
 ]
-const footerUserLinks = ['Mans profils', 'Rezervācijas', 'Atbalsts', 'Privātuma politika']
+const footerUserLinks = [
+    { title: 'Mans profils', to: '/profile' },
+    { title: 'Rezervācijas', to: '/profile' },
+    { title: 'Atbalsts' },
+    { title: 'Privātuma politika' },
+]
 const socialIcons = ['mdi-facebook', 'mdi-instagram', 'mdi-youtube', 'mdi-twitter']
 
 const movieId = computed(() => route.params.id)

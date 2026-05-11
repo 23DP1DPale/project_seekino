@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import AdminMovies from '@/views/admin-movies.vue'
 import Home from '../views/home.vue'
 import Filmas from '@/views/filmas.vue'
 import FilmasDetalizeti from '@/views/filmas-detalizeti.vue'
@@ -49,6 +50,11 @@ const routes = [
     path: '/profile',
     name: 'Profile',
     component: Profile,
+  },
+  {
+    path: '/admin/movies',
+    name: 'AdminMovies',
+    component: AdminMovies,
   },
   {
     path: '/register',

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\AdminMovieController;
 use App\Http\Controllers\Api\MovieController;
 use App\Http\Controllers\Api\ReservationController;
 use Illuminate\Support\Facades\Route;
@@ -9,6 +10,11 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::get('/me', [AuthController::class, 'me']);
 Route::post('/logout', [AuthController::class, 'logout']);
+
+Route::get('/admin/movies', [AdminMovieController::class, 'index']);
+Route::post('/admin/movies', [AdminMovieController::class, 'store']);
+Route::put('/admin/movies/{movie}', [AdminMovieController::class, 'update']);
+Route::delete('/admin/movies/{movie}', [AdminMovieController::class, 'destroy']);
 
 Route::get('/movies', [MovieController::class, 'index']);
 Route::get('/movies/{movie}/feedbacks', [MovieController::class, 'feedbacks']);

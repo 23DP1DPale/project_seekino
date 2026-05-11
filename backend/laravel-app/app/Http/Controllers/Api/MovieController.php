@@ -167,8 +167,10 @@ class MovieController extends Controller
         $hall = $this->hallFor($screening);
         $movie = $this->movieFor($screening);
         $reservedSeatIds = DB::table('reservations_seats')
-            ->where('screening', $screening->id)
-            ->pluck('seat')
+            ->join('reservations', 'reservations_seats.reservation', '=', 'reservations.id')
+            ->where('reservations_seats.screening', $screening->id)
+            ->whereIn('reservations.payment_status', ['pending', 'paid'])
+            ->pluck('reservations_seats.seat')
             ->map(fn ($seat): int => (int) $seat)
             ->all();
 

@@ -17,4 +17,5 @@ Route::get('/movies/{movie}', [MovieController::class, 'show']);
 Route::get('/screenings', [MovieController::class, 'screenings']);
 Route::get('/screenings/{screening}', [MovieController::class, 'showScreening']);
 Route::get('/profile/reservations', [ReservationController::class, 'profileReservations']);
+Route::patch('/profile/reservations/{reservation}/cancel', [ReservationController::class, 'cancelProfileReservation']);
 Route::post('/reservations', [ReservationController::class, 'store']);

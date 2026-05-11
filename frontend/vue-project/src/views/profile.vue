@@ -145,38 +145,111 @@
               {{ reservationsMessage || 'Tev vēl nav nevienas rezervācijas.' }}
             </v-alert>
 
-            <v-row v-else>
-              <v-col v-for="reservation in reservations" :key="reservation.id" cols="12" md="6">
-                <v-card class="reservation-card h-100 pa-4 pa-md-5">
-                  <div class="d-flex align-start justify-space-between ga-3 mb-4">
-                    <div>
-                      <h3 class="reservation-title mb-2">{{ reservation.movieTitle }}</h3>
-                      <p class="reservation-meta mb-0">
-                        {{ reservation.screeningDate }} plkst. {{ reservation.screeningTime }}
-                      </p>
-                    </div>
-                    <v-chip size="small" class="status-chip" :class="`status-chip--${reservation.paymentStatus}`">
-                      {{ paymentStatusLabel(reservation.paymentStatus) }}
-                    </v-chip>
-                  </div>
+            <v-alert v-if="cancellationSuccess" type="success" variant="tonal" class="mb-4">
+              {{ cancellationSuccess }}
+            </v-alert>
 
-                  <div class="details-list">
-                    <div class="detail-row">
-                      <span>Zāle</span>
-                      <strong>{{ reservation.hallName }}</strong>
-                    </div>
-                    <div class="detail-row">
-                      <span>Sēdvietas</span>
-                      <strong>{{ reservation.seatLabels }}</strong>
-                    </div>
-                    <div class="detail-row">
-                      <span>Kopējā cena</span>
-                      <strong>{{ formatPrice(reservation.totalPrice) }}</strong>
-                    </div>
-                  </div>
-                </v-card>
-              </v-col>
-            </v-row>
+            <v-alert v-if="cancellationError" type="error" variant="tonal" class="mb-4">
+              {{ cancellationError }}
+            </v-alert>
+
+            <template v-if="!reservationsLoading && !reservationsError && reservations.length > 0">
+              <div class="reservation-group mb-8">
+                <h3 class="reservation-group-title mb-3">Aktīvās rezervācijas</h3>
+
+                <v-alert v-if="activeReservations.length === 0" type="info" variant="tonal" class="mb-4">
+                  Tev šobrīd nav aktīvu rezervāciju.
+                </v-alert>
+
+                <v-row v-else>
+                  <v-col v-for="reservation in activeReservations" :key="reservation.id" cols="12" md="6">
+                    <v-card class="reservation-card h-100 pa-4 pa-md-5">
+                      <div class="d-flex align-start justify-space-between ga-3 mb-4">
+                        <div>
+                          <h3 class="reservation-title mb-2">{{ reservation.movieTitle }}</h3>
+                          <p class="reservation-meta mb-0">
+                            {{ reservation.screeningDate }} plkst. {{ reservation.screeningTime }}
+                          </p>
+                        </div>
+                        <v-chip size="small" class="status-chip" :class="`status-chip--${reservation.paymentStatus}`">
+                          {{ paymentStatusLabel(reservation.paymentStatus) }}
+                        </v-chip>
+                      </div>
+
+                      <div class="details-list">
+                        <div class="detail-row">
+                          <span>Zāle</span>
+                          <strong>{{ reservation.hallName }}</strong>
+                        </div>
+                        <div class="detail-row">
+                          <span>Sēdvietas</span>
+                          <strong>{{ reservation.seatLabels }}</strong>
+                        </div>
+                        <div class="detail-row">
+                          <span>Kopējā cena</span>
+                          <strong>{{ formatPrice(reservation.totalPrice) }}</strong>
+                        </div>
+                      </div>
+
+                      <div class="reservation-actions mt-4">
+                        <v-btn
+                          variant="outlined"
+                          rounded="lg"
+                          class="text-none cancel-reservation-btn"
+                          prepend-icon="mdi-close-circle-outline"
+                          :loading="cancelingReservationId === reservation.id"
+                          :disabled="Boolean(cancelingReservationId)"
+                          @click="cancelReservation(reservation)"
+                        >
+                          Atcelt rezervāciju
+                        </v-btn>
+                      </div>
+                    </v-card>
+                  </v-col>
+                </v-row>
+              </div>
+
+              <div class="reservation-group">
+                <h3 class="reservation-group-title mb-3">Rezervāciju vēsture</h3>
+
+                <v-alert v-if="cancelledReservations.length === 0" type="info" variant="tonal" class="mb-4">
+                  Rezervāciju vēsturē vēl nav atceltu rezervāciju.
+                </v-alert>
+
+                <v-row v-else>
+                  <v-col v-for="reservation in cancelledReservations" :key="reservation.id" cols="12" md="6">
+                    <v-card class="reservation-card h-100 pa-4 pa-md-5">
+                      <div class="d-flex align-start justify-space-between ga-3 mb-4">
+                        <div>
+                          <h3 class="reservation-title mb-2">{{ reservation.movieTitle }}</h3>
+                          <p class="reservation-meta mb-0">
+                            {{ reservation.screeningDate }} plkst. {{ reservation.screeningTime }}
+                          </p>
+                        </div>
+                        <v-chip size="small" class="status-chip" :class="`status-chip--${reservation.paymentStatus}`">
+                          {{ paymentStatusLabel(reservation.paymentStatus) }}
+                        </v-chip>
+                      </div>
+
+                      <div class="details-list">
+                        <div class="detail-row">
+                          <span>Zāle</span>
+                          <strong>{{ reservation.hallName }}</strong>
+                        </div>
+                        <div class="detail-row">
+                          <span>Sēdvietas</span>
+                          <strong>{{ reservation.seatLabels }}</strong>
+                        </div>
+                        <div class="detail-row">
+                          <span>Kopējā cena</span>
+                          <strong>{{ formatPrice(reservation.totalPrice) }}</strong>
+                        </div>
+                      </div>
+                    </v-card>
+                  </v-col>
+                </v-row>
+              </div>
+            </template>
           </section>
         </template>
       </v-container>
@@ -185,7 +258,7 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { apiBaseUrl, useAuth } from '@/services/auth'
 
@@ -196,6 +269,11 @@ const reservations = ref([])
 const reservationsLoading = ref(false)
 const reservationsError = ref('')
 const reservationsMessage = ref('')
+const cancellationSuccess = ref('')
+const cancellationError = ref('')
+const cancelingReservationId = ref(null)
+const activeReservations = computed(() => reservations.value.filter((reservation) => !reservation.isCancelled))
+const cancelledReservations = computed(() => reservations.value.filter((reservation) => reservation.isCancelled))
 
 const menuGroups = [
   {
@@ -239,11 +317,13 @@ const paymentStatusLabel = (status) => {
   const labels = {
     pending: 'Gaida apmaksu',
     paid: 'Apmaksāts',
-    cancelled: 'Atcelts',
+    cancelled: 'Atcelta',
   }
 
   return labels[status] || 'Nav zināms'
 }
+
+const responseErrorMessage = (payload) => payload?.ziņa || payload?.message || 'Pieprasījumu neizdevās izpildīt.'
 
 const seatLabel = (seat) => {
   const rowNumber = Number(seat.row_number)
@@ -264,6 +344,7 @@ const normalizeReservation = (reservation) => {
     seatLabels: seats.length ? seats.map(seatLabel).join(', ') : 'Nav norādītas',
     totalPrice: Number(reservation.total_price || 0),
     paymentStatus: reservation.payment_status,
+    isCancelled: reservation.payment_status === 'cancelled',
   }
 }
 
@@ -300,6 +381,45 @@ const fetchReservations = async () => {
     reservationsError.value = caughtError.message || 'Rezervācijas neizdevās ielādēt.'
   } finally {
     reservationsLoading.value = false
+  }
+}
+
+const cancelReservation = async (reservation) => {
+  if (!window.confirm('Vai tiešām vēlies atcelt šo rezervāciju?')) {
+    return
+  }
+
+  const accessToken = localStorage.getItem('seekino_token') || token.value
+
+  if (!accessToken) {
+    cancellationError.value = 'Lai atceltu rezervāciju, nepieciešams pieslēgties.'
+    return
+  }
+
+  cancelingReservationId.value = reservation.id
+  cancellationSuccess.value = ''
+  cancellationError.value = ''
+
+  try {
+    const response = await fetch(`${apiBaseUrl}/api/profile/reservations/${reservation.id}/cancel`, {
+      method: 'PATCH',
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+    })
+    const data = await response.json().catch(() => ({}))
+
+    if (!response.ok) {
+      throw new Error(responseErrorMessage(data))
+    }
+
+    cancellationSuccess.value = data.ziņa || 'Rezervācija veiksmīgi atcelta.'
+    await fetchReservations()
+  } catch (caughtError) {
+    cancellationError.value = caughtError.message || 'Rezervāciju neizdevās atcelt.'
+  } finally {
+    cancelingReservationId.value = null
   }
 }
 
@@ -442,10 +562,25 @@ onMounted(async () => {
   color: #edf2ff;
 }
 
+.cancel-reservation-btn {
+  border-color: rgba(229, 9, 20, 0.5);
+  color: #ffd7d9;
+}
+
+.cancel-reservation-btn:hover {
+  background: rgba(229, 9, 20, 0.12);
+}
+
 .reservation-title {
   color: #ffffff;
   font-size: 1.3rem;
   line-height: 1.25;
+}
+
+.reservation-group-title {
+  color: #ffffff;
+  font-size: 1.15rem;
+  font-weight: 800;
 }
 
 .status-chip {

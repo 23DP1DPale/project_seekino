@@ -15,6 +15,7 @@ Route::get('/admin/movies', [AdminMovieController::class, 'index']);
 Route::post('/admin/movies', [AdminMovieController::class, 'store']);
 Route::put('/admin/movies/{movie}', [AdminMovieController::class, 'update']);
 Route::delete('/admin/movies/{movie}', [AdminMovieController::class, 'destroy']);
+Route::get('/admin/genres', [AdminMovieController::class, 'genres']);
 
 Route::get('/movies', [MovieController::class, 'index']);
 Route::get('/movies/{movie}/feedbacks', [MovieController::class, 'feedbacks']);

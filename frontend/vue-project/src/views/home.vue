@@ -270,7 +270,7 @@
                                 <div class="d-flex justify-space-between align-center mb-2">
                                     <h3 class="movie-title">{{ movie.title }}</h3>
                                     <v-chip size="small" prepend-icon="mdi-cash" class="movie-price-chip">
-                                        no {{ movie.price }}€
+                                        {{ movie.priceLabel }}
                                     </v-chip>
                                 </div>
                                 <p class="text-caption movie-meta mb-2">
@@ -468,17 +468,27 @@ const upcomingShows = ref([
 const displayedMovies = computed(() => movies.value.slice(0, 3))
 const featuredShows = computed(() => upcomingShows.value.slice(0, 4))
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'
+const defaultMoviePoster = 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=1000&q=80'
 
-const normalizeMovie = (movie, index) => ({
-    id: movie.id ?? `${movie.title || 'movie'}-${index}`,
-    title: movie.title || 'Filmas nosaukums nav pieejams',
-    director: movie.director || 'Nav norādīts',
-    duration: movie.duration ?? '-',
-    genre: movie.genre || 'Nav norādīts',
-    rating: Number(movie.rating) || 0,
-    price: movie.price ?? '-',
-    poster: movie.poster || '',
-})
+const priceLabel = (price) => price === null || price === undefined || price === ''
+    ? 'Cena nav pieejama'
+    : `no ${Number(price).toFixed(2)} EUR`
+
+const normalizeMovie = (movie, index) => {
+    const genre = movie.genre || movie.genres?.find((item) => item.primary)?.name || movie.genres?.[0]?.name
+
+    return {
+        id: movie.id ?? `${movie.title || 'movie'}-${index}`,
+        title: movie.title || 'Filmas nosaukums nav pieejams',
+        director: movie.director || 'Nav norādīts',
+        duration: movie.duration ?? '-',
+        genre: genre || 'Žanrs nav norādīts',
+        rating: Number(movie.rating) || 0,
+        price: movie.price,
+        priceLabel: priceLabel(movie.price),
+        poster: movie.poster || movie.image || defaultMoviePoster,
+    }
+}
 
 const extractMovies = (payload) => {
     if (Array.isArray(payload)) {

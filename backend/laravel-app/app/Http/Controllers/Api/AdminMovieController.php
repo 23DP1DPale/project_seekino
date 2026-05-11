@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\ApiToken;
+use App\Models\Genre;
 use App\Models\Movie;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
@@ -22,6 +23,7 @@ class AdminMovieController extends Controller
         }
 
         $movies = Movie::query()
+            ->with('genres')
             ->orderBy('id')
             ->get()
             ->map(fn (Movie $movie): array => $this->movieResponse($movie))
@@ -30,6 +32,30 @@ class AdminMovieController extends Controller
         return response()->json([
             'ziņa' => 'Filmas iegūtas veiksmīgi.',
             'movies' => $movies,
+        ]);
+    }
+
+    public function genres(Request $request): JsonResponse
+    {
+        $admin = $this->adminUser($request);
+
+        if ($admin instanceof JsonResponse) {
+            return $admin;
+        }
+
+        $genres = Genre::query()
+            ->orderBy('name')
+            ->get()
+            ->map(fn (Genre $genre): array => [
+                'id' => $genre->id,
+                'name' => $genre->name,
+                'description' => $genre->description,
+            ])
+            ->values();
+
+        return response()->json([
+            'ziņa' => 'Žanri iegūti veiksmīgi.',
+            'genres' => $genres,
         ]);
     }
 
@@ -47,7 +73,16 @@ class AdminMovieController extends Controller
             return $this->validationError($validator->errors()->toArray());
         }
 
-        $movie = Movie::create($validator->validated());
+        $validated = $validator->validated();
+        $genreIds = $validated['genre_ids'] ?? [];
+        unset($validated['genre_ids']);
+
+        $movie = DB::transaction(function () use ($validated, $genreIds): Movie {
+            $movie = Movie::create($validated);
+            $this->syncGenres($movie, $genreIds);
+
+            return $movie->load('genres');
+        });
 
         return response()->json([
             'ziņa' => 'Filma veiksmīgi izveidota.',
@@ -69,11 +104,18 @@ class AdminMovieController extends Controller
             return $this->validationError($validator->errors()->toArray());
         }
 
-        $movie->update($validator->validated());
+        $validated = $validator->validated();
+        $genreIds = $validated['genre_ids'] ?? [];
+        unset($validated['genre_ids']);
+
+        DB::transaction(function () use ($movie, $validated, $genreIds): void {
+            $movie->update($validated);
+            $this->syncGenres($movie, $genreIds);
+        });
 
         return response()->json([
             'ziņa' => 'Filma veiksmīgi atjaunota.',
-            'movie' => $this->movieResponse($movie->refresh()),
+            'movie' => $this->movieResponse($movie->refresh()->load('genres')),
         ]);
     }
 
@@ -154,7 +196,9 @@ class AdminMovieController extends Controller
             'length' => ['required', 'integer', 'min:1'],
             'description' => ['required', 'string'],
             'director' => ['required', 'string', 'max:100'],
-            'age_restriction' => ['required', 'string', 'max:10'],
+            'age_restriction' => ['required', 'string', 'max:50'],
+            'genre_ids' => ['sometimes', 'array'],
+            'genre_ids.*' => ['integer', 'distinct', 'exists:genres,id'],
         ];
     }
 
@@ -177,7 +221,11 @@ class AdminMovieController extends Controller
             'director.max' => 'Režisora vārds nedrīkst pārsniegt 100 rakstzīmes.',
             'age_restriction.required' => 'Vecuma ierobežojums ir obligāts.',
             'age_restriction.string' => 'Vecuma ierobežojumam jābūt tekstam.',
-            'age_restriction.max' => 'Vecuma ierobežojums nedrīkst pārsniegt 10 rakstzīmes.',
+            'age_restriction.max' => 'Vecuma ierobežojums nedrīkst pārsniegt 50 rakstzīmes.',
+            'genre_ids.array' => 'Žanriem jābūt saraksta formātā.',
+            'genre_ids.*.integer' => 'Žanra identifikatoram jābūt skaitlim.',
+            'genre_ids.*.distinct' => 'Žanru sarakstā ir dublikāti.',
+            'genre_ids.*.exists' => 'Norādītais žanrs neeksistē.',
         ];
     }
 
@@ -201,6 +249,17 @@ class AdminMovieController extends Controller
 
     private function movieResponse(Movie $movie): array
     {
+        $genres = $movie->relationLoaded('genres')
+            ? $movie->genres
+                ->map(fn (Genre $genre): array => [
+                    'id' => $genre->id,
+                    'name' => $genre->name,
+                    'description' => $genre->description,
+                    'primary' => (bool) $genre->pivot?->primary_genre,
+                ])
+                ->values()
+            : collect();
+
         return [
             'id' => $movie->id,
             'name' => $movie->name,
@@ -211,6 +270,37 @@ class AdminMovieController extends Controller
             'director' => $movie->director,
             'age_restriction' => $movie->age_restriction,
             'ageRating' => $movie->age_restriction,
+            'genres' => $genres,
+            'genre_ids' => $genres->pluck('id')->values(),
         ];
+    }
+
+    /**
+     * @param array<int, int|string> $genreIds
+     */
+    private function syncGenres(Movie $movie, array $genreIds): void
+    {
+        DB::table('movies_genres_usage')
+            ->where('movie', $movie->id)
+            ->delete();
+
+        $uniqueGenreIds = collect($genreIds)
+            ->map(fn ($genreId): int => (int) $genreId)
+            ->unique()
+            ->values();
+
+        if ($uniqueGenreIds->isEmpty()) {
+            return;
+        }
+
+        DB::table('movies_genres_usage')->insert(
+            $uniqueGenreIds
+                ->map(fn (int $genreId, int $index): array => [
+                    'movie' => $movie->id,
+                    'genre' => $genreId,
+                    'primary_genre' => $index === 0,
+                ])
+                ->all()
+        );
     }
 }

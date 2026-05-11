@@ -334,7 +334,7 @@
                                 <div class="d-flex justify-space-between align-center mb-2">
                                     <h3 class="movie-title">{{ movie.title }}</h3>
                                     <v-chip size="small" class="movie-price-chip">
-                                        no {{ movie.price ?? '-' }} EUR
+                                        {{ movie.priceLabel }}
                                     </v-chip>
                                 </div>
                                 <p class="text-caption movie-meta mb-2">
@@ -519,24 +519,34 @@ const footerUserLinks = [
 const socialIcons = ['mdi-facebook', 'mdi-instagram', 'mdi-youtube', 'mdi-twitter']
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'
+const defaultMoviePoster = 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=1000&q=80'
 const movies = ref([])
 const moviesLoading = ref(false)
 const moviesError = ref('')
 
-const normalizeMovie = (movie) => ({
-    id: movie.id,
-    title: movie.title,
-    director: movie.director,
-    duration: movie.duration,
-    genre: movie.genre,
-    ageRating: movie.ageRating,
-    rating: movie.rating,
-    price: movie.price,
-    poster: movie.poster,
-    nextSession: movie.nextSession,
-    formats: movie.formats || [],
-    description: movie.description,
-})
+const priceLabel = (price) => price === null || price === undefined || price === ''
+    ? 'Cena nav pieejama'
+    : `no ${Number(price).toFixed(2)} EUR`
+
+const normalizeMovie = (movie) => {
+    const genre = movie.genre || movie.genres?.find((item) => item.primary)?.name || movie.genres?.[0]?.name
+
+    return {
+        id: movie.id,
+        title: movie.title,
+        director: movie.director,
+        duration: movie.duration,
+        genre: genre || 'Žanrs nav norādīts',
+        ageRating: movie.ageRating,
+        rating: movie.rating,
+        price: movie.price,
+        priceLabel: priceLabel(movie.price),
+        poster: movie.poster || movie.image || defaultMoviePoster,
+        nextSession: movie.nextSession,
+        formats: movie.formats || [],
+        description: movie.description,
+    }
+}
 
 const fetchMovies = async () => {
     moviesLoading.value = true

@@ -110,13 +110,29 @@
                     class="mb-3"
                     :disabled="formLoading"
                   />
-                  <v-text-field
+                  <v-select
                     v-model="form.age_restriction"
                     label="Vecuma ierobežojums"
+                    :items="ageRestrictionOptions"
                     variant="outlined"
                     prepend-inner-icon="mdi-shield-alert-outline"
                     class="mb-3"
                     :disabled="formLoading"
+                  />
+                  <v-select
+                    v-model="form.genre_ids"
+                    label="Žanri"
+                    :items="genres"
+                    item-title="name"
+                    item-value="id"
+                    variant="outlined"
+                    prepend-inner-icon="mdi-tag-multiple-outline"
+                    multiple
+                    chips
+                    closable-chips
+                    class="mb-3"
+                    :loading="genresLoading"
+                    :disabled="formLoading || genresLoading"
                   />
                   <v-textarea
                     v-model="form.description"
@@ -170,7 +186,7 @@
                     <div class="movie-row-main">
                       <h3 class="movie-title mb-1">{{ movie.name }}</h3>
                       <p class="movie-meta mb-0">
-                        {{ movie.director }} | {{ movie.length }} min | {{ movie.age_restriction }}
+                        {{ movie.director }} | {{ movie.length }} min | {{ movie.age_restriction }} | {{ genreLabel(movie) }}
                       </p>
                     </div>
 
@@ -215,7 +231,9 @@ const { token, user, fetchMe, clearSession } = useAuth()
 const accessLoading = ref(true)
 const accessError = ref('')
 const movies = ref([])
+const genres = ref([])
 const moviesLoading = ref(false)
+const genresLoading = ref(false)
 const moviesError = ref('')
 const formLoading = ref(false)
 const deleteLoadingId = ref(null)
@@ -223,6 +241,7 @@ const editingMovieId = ref(null)
 const successMessage = ref('')
 const errorMessage = ref('')
 const form = ref(emptyForm())
+const ageRestrictionOptions = ['Bez ierobežojuma', '7+', '12+', '13+', '16+', '18+']
 
 function emptyForm() {
   return {
@@ -230,7 +249,8 @@ function emptyForm() {
     length: null,
     description: '',
     director: '',
-    age_restriction: '',
+    age_restriction: 'Bez ierobežojuma',
+    genre_ids: [],
   }
 }
 
@@ -269,12 +289,34 @@ const ensureAdminAccess = async () => {
       return
     }
 
-    await fetchMovies()
+    await Promise.all([fetchGenres(), fetchMovies()])
   } catch {
     clearSession()
     router.push({ path: '/login', query: { redirect: '/admin/movies' } })
   } finally {
     accessLoading.value = false
+  }
+}
+
+const fetchGenres = async () => {
+  genresLoading.value = true
+
+  try {
+    const response = await fetch(`${apiBaseUrl}/api/admin/genres`, {
+      headers: authHeaders(),
+    })
+    const data = await response.json().catch(() => ({}))
+
+    if (!response.ok) {
+      throw new Error(responseError(data))
+    }
+
+    genres.value = data.genres || []
+  } catch (error) {
+    genres.value = []
+    errorMessage.value = error.message || 'Žanrus neizdevās ielādēt.'
+  } finally {
+    genresLoading.value = false
   }
 }
 
@@ -319,9 +361,16 @@ const startEdit = (movie) => {
     length: movie.length || null,
     description: movie.description || '',
     director: movie.director || '',
-    age_restriction: movie.age_restriction || '',
+    age_restriction: movie.age_restriction || 'Bez ierobežojuma',
+    genre_ids: movie.genre_ids || [],
   }
   resetMessages()
+}
+
+const genreLabel = (movie) => {
+  const movieGenres = movie.genres || []
+
+  return movieGenres.length ? movieGenres.map((genre) => genre.name).join(', ') : 'Žanrs nav norādīts'
 }
 
 const submitMovie = async () => {

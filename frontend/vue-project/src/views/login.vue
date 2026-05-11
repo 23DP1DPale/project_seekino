@@ -75,15 +75,23 @@
 
 <script setup>
 import { ref } from 'vue'
-import { RouterLink, useRouter } from 'vue-router'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useAuth } from '@/services/auth'
 
+const route = useRoute()
 const router = useRouter()
 const { authLoading, login } = useAuth()
 const form = ref({ email: '', password: '' })
 const error = ref('')
 
 const isEmailValid = (value) => /^\S+@\S+\.\S+$/.test(value)
+const redirectTarget = () => {
+  const redirect = Array.isArray(route.query.redirect) ? route.query.redirect[0] : route.query.redirect
+
+  return typeof redirect === 'string' && redirect.startsWith('/') && !redirect.startsWith('//')
+    ? redirect
+    : '/'
+}
 
 const submit = async () => {
   error.value = ''
@@ -100,7 +108,7 @@ const submit = async () => {
 
   try {
     await login(form.value)
-    router.push('/')
+    router.push(redirectTarget())
   } catch (err) {
     error.value = err.message || 'Pieslēgšanās neizdevās.'
   }

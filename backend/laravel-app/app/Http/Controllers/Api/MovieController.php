@@ -3,15 +3,19 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\ApiToken;
+use App\Models\Feedback;
 use App\Models\Hall;
 use App\Models\Movie;
 use App\Models\Screening;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 
 class MovieController extends Controller
 {
@@ -70,6 +74,69 @@ class MovieController extends Controller
             ->loadMin('screenings as price', 'cost');
 
         return response()->json($this->movieResponse($movie, includeDetails: true));
+    }
+
+    public function feedbacks(Movie $movie): JsonResponse
+    {
+        $feedbacks = $movie->feedbacks()
+            ->with('user')
+            ->orderByDesc('created_at')
+            ->get()
+            ->map(fn (Feedback $feedback): array => $this->feedbackResponse($feedback))
+            ->values();
+
+        return response()->json([
+            'ziņa' => $feedbacks->isEmpty()
+                ? 'Šai filmai vēl nav atsauksmju.'
+                : 'Atsauksmes iegūtas veiksmīgi.',
+            'feedbacks' => $feedbacks,
+        ]);
+    }
+
+    public function storeFeedback(Request $request, Movie $movie): JsonResponse
+    {
+        $user = $this->authenticatedUser($request);
+
+        if (! $user) {
+            return $this->unauthenticatedResponse();
+        }
+
+        $validator = Validator::make($request->all(), [
+            'rating' => ['required', 'numeric', 'min:1', 'max:5'],
+            'comment' => ['required', 'string', 'max:1000'],
+        ], [
+            'rating.required' => 'Vērtējums ir obligāts.',
+            'rating.numeric' => 'Vērtējumam jābūt skaitlim.',
+            'rating.min' => 'Vērtējumam jābūt vismaz 1.',
+            'rating.max' => 'Vērtējums nedrīkst pārsniegt 5.',
+            'comment.required' => 'Atsauksmes teksts ir obligāts.',
+            'comment.string' => 'Atsauksmes tekstam jābūt tekstam.',
+            'comment.max' => 'Atsauksme nedrīkst pārsniegt 1000 rakstzīmes.',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'ziņa' => 'Ievadītie dati nav derīgi.',
+                'kļūdas' => $validator->errors(),
+            ], 422);
+        }
+
+        $feedback = Feedback::create([
+            'rating' => round((float) $request->input('rating'), 1),
+            'comment' => trim((string) $request->input('comment')),
+            'movie' => $movie->id,
+            'user' => $user->id,
+        ]);
+
+        $feedback->refresh();
+        $feedback->load('user');
+
+        return response()->json([
+            'ziņa' => 'Atsauksme veiksmīgi pievienota.',
+            'feedback' => $this->feedbackResponse($feedback),
+            'average_rating' => $this->movieAverageRating($movie),
+            'rating' => $this->movieAverageRating($movie),
+        ], 201);
     }
 
     public function screenings(): JsonResponse
@@ -285,6 +352,63 @@ class MovieController extends Controller
         }
 
         return round((float) $movie->feedbacks->avg('rating'), 1);
+    }
+
+    private function movieAverageRating(Movie $movie): ?float
+    {
+        $average = Feedback::query()
+            ->where('movie', $movie->id)
+            ->avg('rating');
+
+        return $average === null ? null : round((float) $average, 1);
+    }
+
+    private function feedbackResponse(Feedback $feedback): array
+    {
+        $user = $feedback->relationLoaded('user') && $feedback->getRelation('user') instanceof User
+            ? $feedback->getRelation('user')
+            : null;
+
+        return [
+            'id' => $feedback->id,
+            'rating' => (float) $feedback->rating,
+            'comment' => $feedback->comment,
+            'feedback' => $feedback->comment,
+            'user' => [
+                'nickname' => $user?->nickname ?? 'Lietotājs',
+                'name' => $user?->nickname ?? 'Lietotājs',
+            ],
+            'created_at' => $feedback->created_at?->toDateTimeString(),
+        ];
+    }
+
+    private function authenticatedUser(Request $request): ?User
+    {
+        $token = $request->bearerToken();
+
+        if (! is_string($token) || $token === '') {
+            return null;
+        }
+
+        $apiToken = ApiToken::query()
+            ->with('user')
+            ->where('token_hash', hash('sha256', $token))
+            ->first();
+
+        if (! $apiToken) {
+            return null;
+        }
+
+        $apiToken->forceFill(['last_used_at' => now()])->save();
+
+        return $apiToken->user;
+    }
+
+    private function unauthenticatedResponse(): JsonResponse
+    {
+        return response()->json([
+            'ziņa' => 'Autentifikācijas tokens nav derīgs vai nav norādīts.',
+        ], 401);
     }
 
     private function lowestPrice(Movie $movie): ?float

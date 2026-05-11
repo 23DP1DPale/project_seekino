@@ -11,6 +11,8 @@ Route::get('/me', [AuthController::class, 'me']);
 Route::post('/logout', [AuthController::class, 'logout']);
 
 Route::get('/movies', [MovieController::class, 'index']);
+Route::get('/movies/{movie}/feedbacks', [MovieController::class, 'feedbacks']);
+Route::post('/movies/{movie}/feedbacks', [MovieController::class, 'storeFeedback']);
 Route::get('/movies/{movie}', [MovieController::class, 'show']);
 Route::get('/screenings', [MovieController::class, 'screenings']);
 Route::get('/screenings/{screening}', [MovieController::class, 'showScreening']);

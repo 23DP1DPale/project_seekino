@@ -383,6 +383,136 @@
                     </v-card>
                 </v-container>
             </section>
+
+            <section v-if="movie && !movieLoading && !movieError" class="feedbacks-section">
+                <v-container class="pt-2 pb-10">
+                    <div class="d-flex align-center justify-space-between mb-4 flex-wrap ga-3">
+                        <h2 class="section-title mb-0">Atsauksmes</h2>
+                        <v-chip size="small" variant="outlined" class="detail-chip" prepend-icon="mdi-star-outline">
+                            Vidējais vērtējums: {{ movie.rating || 'Nav vērtējumu' }}
+                        </v-chip>
+                    </div>
+
+                    <v-row>
+                        <v-col cols="12" md="5">
+                            <v-card class="feedback-form-card rounded-xl pa-4 pa-md-5">
+                                <h3 class="feedback-card-title mb-3">Pievieno atsauksmi</h3>
+
+                                <template v-if="isAuthenticated">
+                                    <v-alert
+                                        v-if="feedbackSuccess"
+                                        type="success"
+                                        variant="tonal"
+                                        density="comfortable"
+                                        class="mb-3"
+                                    >
+                                        {{ feedbackSuccess }}
+                                    </v-alert>
+
+                                    <v-alert
+                                        v-if="feedbackError"
+                                        type="error"
+                                        variant="tonal"
+                                        density="comfortable"
+                                        class="mb-3"
+                                    >
+                                        {{ feedbackError }}
+                                    </v-alert>
+
+                                    <v-form @submit.prevent="submitFeedback">
+                                        <div class="mb-3">
+                                            <span class="fact-label">Vērtējums</span>
+                                            <v-rating
+                                                v-model="feedbackForm.rating"
+                                                color="#FFD166"
+                                                hover
+                                                density="comfortable"
+                                                length="5"
+                                                :disabled="feedbackSubmitting"
+                                            />
+                                        </div>
+
+                                        <v-textarea
+                                            v-model="feedbackForm.comment"
+                                            label="Atsauksme"
+                                            variant="outlined"
+                                            rows="5"
+                                            counter="1000"
+                                            maxlength="1000"
+                                            :disabled="feedbackSubmitting"
+                                            class="feedback-textarea mb-3"
+                                        />
+
+                                        <v-btn
+                                            type="submit"
+                                            color="#E50914"
+                                            rounded="lg"
+                                            class="text-none reserve-btn"
+                                            :loading="feedbackSubmitting"
+                                            :disabled="feedbackSubmitting"
+                                        >
+                                            Pievienot atsauksmi
+                                        </v-btn>
+                                    </v-form>
+                                </template>
+
+                                <template v-else>
+                                    <p class="detail-muted mb-4">Lai pievienotu atsauksmi, lūdzu, pieslēdzies.</p>
+                                    <v-btn rounded="lg" class="text-none login-btn" :to="loginRedirectRoute">
+                                        Pieslēgties
+                                    </v-btn>
+                                </template>
+                            </v-card>
+                        </v-col>
+
+                        <v-col cols="12" md="7">
+                            <div v-if="feedbacksLoading" class="feedback-state text-center py-8">
+                                <v-progress-circular indeterminate color="#E50914" class="mb-3" />
+                                <p class="detail-muted mb-0">Atsauksmes tiek ielādētas...</p>
+                            </div>
+
+                            <v-alert v-else-if="feedbacksError" type="error" variant="tonal" class="mb-4">
+                                <div class="d-flex align-center justify-space-between flex-wrap ga-3">
+                                    <span>{{ feedbacksError }}</span>
+                                    <v-btn variant="outlined" rounded="lg" class="text-none" @click="fetchFeedbacks">
+                                        Mēģināt vēlreiz
+                                    </v-btn>
+                                </div>
+                            </v-alert>
+
+                            <v-card v-else-if="feedbacks.length === 0" class="empty-state-card rounded-xl pa-6 text-center">
+                                <p class="empty-state-copy mb-0">{{ feedbacksMessage || 'Šai filmai vēl nav atsauksmju.' }}</p>
+                            </v-card>
+
+                            <div v-else class="feedback-list">
+                                <v-card
+                                    v-for="feedback in feedbacks"
+                                    :key="feedback.id"
+                                    class="feedback-card rounded-xl pa-4 mb-3"
+                                >
+                                    <div class="d-flex align-start justify-space-between flex-wrap ga-3 mb-2">
+                                        <div>
+                                            <strong class="feedback-author">{{ feedback.userName }}</strong>
+                                            <p class="feedback-date mb-0">{{ feedback.createdAt }}</p>
+                                        </div>
+                                        <div class="d-flex align-center ga-2">
+                                            <v-rating
+                                                :model-value="feedback.rating"
+                                                half-increments
+                                                readonly
+                                                density="compact"
+                                                color="#FFD166"
+                                            />
+                                            <strong class="feedback-rating">{{ feedback.rating }}</strong>
+                                        </div>
+                                    </div>
+                                    <p class="feedback-comment mb-0">{{ feedback.comment }}</p>
+                                </v-card>
+                            </div>
+                        </v-col>
+                    </v-row>
+                </v-container>
+            </section>
         </v-main>
 
         <v-footer class="site-footer pa-0">
@@ -460,7 +590,7 @@ import { useAuth } from '@/services/auth'
 
 const route = useRoute()
 const drawer = ref(false)
-const { user, isAuthenticated, authLoading: navAuthLoading, logout } = useAuth()
+const { token, user, isAuthenticated, authLoading: navAuthLoading, logout } = useAuth()
 const authDialog = ref(false)
 const authMode = ref('login')
 const authLoading = ref(false)
@@ -471,6 +601,14 @@ const registerForm = ref({ name: '', email: '', password: '', confirmPassword: '
 const movie = ref(null)
 const movieLoading = ref(false)
 const movieError = ref('')
+const feedbacks = ref([])
+const feedbacksLoading = ref(false)
+const feedbacksError = ref('')
+const feedbacksMessage = ref('')
+const feedbackSubmitting = ref(false)
+const feedbackError = ref('')
+const feedbackSuccess = ref('')
+const feedbackForm = ref({ rating: 5, comment: '' })
 const selectedScreeningId = ref(null)
 const screeningsSection = ref(null)
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'
@@ -510,6 +648,12 @@ const footerUserLinks = [
 const socialIcons = ['mdi-facebook', 'mdi-instagram', 'mdi-youtube', 'mdi-twitter']
 
 const movieId = computed(() => route.params.id)
+const loginRedirectRoute = computed(() => ({
+    path: '/login',
+    query: {
+        redirect: route.fullPath,
+    },
+}))
 const selectedScreening = computed(() =>
     movie.value?.screenings.find((screening) => screening.id === selectedScreeningId.value) || null
 )
@@ -539,6 +683,12 @@ const formatDateTime = (value) => {
     const [date, time] = normalized.split(' ')
 
     return `${formatDate(date)} ${formatTime(time)}`
+}
+
+const formatReviewDate = (value) => {
+    if (!value) return 'Datums nav norādīts'
+
+    return formatDateTime(value)
 }
 
 const formatPrice = (value) => {
@@ -580,6 +730,26 @@ const normalizeMovie = (payload) => {
     }
 }
 
+const normalizeFeedback = (feedback) => ({
+    id: feedback.id,
+    rating: Number(feedback.rating || 0),
+    comment: feedback.comment || feedback.feedback || '',
+    userName: feedback.user?.nickname || feedback.user?.name || feedback.nickname || 'Lietotājs',
+    createdAt: formatReviewDate(feedback.created_at),
+})
+
+const feedbackResponseError = (payload) => {
+    if (payload?.kļūdas && typeof payload.kļūdas === 'object') {
+        const firstError = Object.values(payload.kļūdas).flat().find(Boolean)
+
+        if (firstError) {
+            return firstError
+        }
+    }
+
+    return payload?.ziņa || payload?.message || ''
+}
+
 const fetchMovie = async () => {
     movieLoading.value = true
     movieError.value = ''
@@ -606,8 +776,95 @@ const fetchMovie = async () => {
     }
 }
 
-onMounted(fetchMovie)
-watch(movieId, fetchMovie)
+const fetchFeedbacks = async () => {
+    feedbacksLoading.value = true
+    feedbacksError.value = ''
+    feedbacksMessage.value = ''
+
+    try {
+        const response = await fetch(`${apiBaseUrl}/api/movies/${movieId.value}/feedbacks`, {
+            headers: {
+                Accept: 'application/json',
+            },
+        })
+        const data = await response.json().catch(() => ({}))
+
+        if (!response.ok) {
+            throw new Error(data.ziņa || data.message || 'Atsauksmes neizdevās ielādēt.')
+        }
+
+        feedbacks.value = (data.feedbacks || []).map(normalizeFeedback)
+        feedbacksMessage.value = data.ziņa || ''
+    } catch (error) {
+        feedbacks.value = []
+        feedbacksError.value = error.message || 'Atsauksmes neizdevās ielādēt.'
+    } finally {
+        feedbacksLoading.value = false
+    }
+}
+
+const submitFeedback = async () => {
+    feedbackError.value = ''
+    feedbackSuccess.value = ''
+
+    if (!feedbackForm.value.rating || feedbackForm.value.rating < 1 || feedbackForm.value.rating > 5) {
+        feedbackError.value = 'Vērtējumam jābūt no 1 līdz 5.'
+        return
+    }
+
+    if (!feedbackForm.value.comment.trim()) {
+        feedbackError.value = 'Atsauksmes teksts ir obligāts.'
+        return
+    }
+
+    if (feedbackForm.value.comment.length > 1000) {
+        feedbackError.value = 'Atsauksme nedrīkst pārsniegt 1000 rakstzīmes.'
+        return
+    }
+
+    feedbackSubmitting.value = true
+
+    try {
+        const response = await fetch(`${apiBaseUrl}/api/movies/${movieId.value}/feedbacks`, {
+            method: 'POST',
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token.value}`,
+            },
+            body: JSON.stringify({
+                rating: feedbackForm.value.rating,
+                comment: feedbackForm.value.comment.trim(),
+            }),
+        })
+        const data = await response.json().catch(() => ({}))
+
+        if (!response.ok) {
+            throw new Error(feedbackResponseError(data) || 'Atsauksmi neizdevās pievienot.')
+        }
+
+        feedbackForm.value = { rating: 5, comment: '' }
+        feedbackSuccess.value = data.ziņa || 'Atsauksme veiksmīgi pievienota.'
+
+        if (movie.value && data.rating !== undefined) {
+            movie.value.rating = Number(data.rating) || movie.value.rating
+        }
+
+        await fetchFeedbacks()
+    } catch (error) {
+        feedbackError.value = error.message || 'Atsauksmi neizdevās pievienot.'
+    } finally {
+        feedbackSubmitting.value = false
+    }
+}
+
+const loadMovieDetails = () => {
+    fetchMovie()
+    fetchFeedbacks()
+}
+
+onMounted(loadMovieDetails)
+watch(movieId, loadMovieDetails)
 
 const selectScreening = (screening) => {
     selectedScreeningId.value = screening.id
@@ -702,7 +959,9 @@ const submitAuth = async () => {
 
 .hero-panel,
 .screening-card,
-.empty-state-card {
+.empty-state-card,
+.feedback-form-card,
+.feedback-card {
     animation: subtle-fade-in 0.42s ease both;
 }
 
@@ -882,18 +1141,21 @@ const submitAuth = async () => {
     content: none;
 }
 
-.screenings-section {
+.screenings-section,
+.feedbacks-section {
     position: relative;
     overflow: hidden;
     background: transparent;
 }
 
-.screenings-section::before {
+.screenings-section::before,
+.feedbacks-section::before {
     content: none;
 }
 
 .hero-section :deep(.v-container),
-.screenings-section :deep(.v-container) {
+.screenings-section :deep(.v-container),
+.feedbacks-section :deep(.v-container) {
     position: relative;
     z-index: 1;
 }
@@ -1005,9 +1267,55 @@ const submitAuth = async () => {
 }
 
 .screening-card,
-.empty-state-card {
+.empty-state-card,
+.feedback-form-card,
+.feedback-card {
     border: 1px solid rgba(255, 255, 255, 0.1);
     background: linear-gradient(180deg, #141926, #0f131d);
+}
+
+.feedback-form-card :deep(.v-field),
+.feedback-form-card :deep(.v-label),
+.feedback-form-card :deep(.v-field__input),
+.feedback-form-card :deep(.v-counter),
+.feedback-form-card :deep(.v-icon),
+.feedback-form-card :deep(.v-alert__content) {
+    color: #edf2ff;
+}
+
+.feedback-card-title {
+    color: #ffffff;
+    font-size: 1.2rem;
+}
+
+.feedback-state {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 24px;
+    background: rgba(15, 19, 29, 0.78);
+}
+
+.feedback-list {
+    display: grid;
+    gap: 12px;
+}
+
+.feedback-card {
+    color: #edf2ff;
+}
+
+.feedback-author,
+.feedback-rating {
+    color: #ffffff;
+}
+
+.feedback-date {
+    color: #9eabc4;
+    font-size: 0.86rem;
+}
+
+.feedback-comment {
+    color: #d2d9e7;
+    line-height: 1.65;
 }
 
 .screening-choice-card {

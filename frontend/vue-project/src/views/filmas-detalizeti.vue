@@ -257,7 +257,9 @@
                                 <h1 class="detail-title mb-4">{{ movie.title }}</h1>
 
                                 <div class="d-flex flex-wrap ga-2 mb-4">
-                                    <v-chip size="small" class="movie-price-chip">no {{ movie.price }}</v-chip>
+                                    <v-chip size="small" class="movie-price-chip">
+                                        {{ movie.priceLabel }}
+                                    </v-chip>
                                     <v-chip size="small" variant="outlined" class="detail-chip">
                                         {{ movie.duration }} min
                                     </v-chip>
@@ -303,18 +305,10 @@
                                         rounded="lg"
                                         class="text-none reserve-btn"
                                         append-icon="mdi-calendar-clock-outline"
+                                        :disabled="!movie.screenings.length"
                                         @click="scrollToScreenings"
                                     >
-                                        Izvēlēties seansu
-                                    </v-btn>
-                                    <v-btn
-                                        variant="outlined"
-                                        size="large"
-                                        rounded="lg"
-                                        class="text-none outline-btn"
-                                        to="/filmas"
-                                    >
-                                        Atpakaļ uz filmām
+                                        {{ movie.screenings.length ? 'Izvēlēties seansu' : 'Seansi nav pieejami' }}
                                     </v-btn>
                                 </div>
 
@@ -697,19 +691,34 @@ const formatPrice = (value) => {
     return `${Number(value).toFixed(2)} €`
 }
 
-const normalizeScreening = (screening) => ({
-    id: screening.id,
-    date: formatDate(screening.screening_date || screening.date || screening.datetime?.slice(0, 10)),
-    time: formatTime(screening.screening_time || screening.time || screening.datetime?.slice(11, 16)),
-    price: formatPrice(screening.price ?? screening.cost),
-    hall: screening.hall?.name || (typeof screening.hall === 'string' ? screening.hall : 'Zāle nav norādīta'),
-})
+const normalizePriceValue = (value) => {
+    const price = Number(value)
+
+    return Number.isFinite(price) ? price : null
+}
+
+const normalizeScreening = (screening) => {
+    const priceValue = normalizePriceValue(screening.price ?? screening.cost)
+
+    return {
+        id: screening.id,
+        date: formatDate(screening.screening_date || screening.date || screening.datetime?.slice(0, 10)),
+        time: formatTime(screening.screening_time || screening.time || screening.datetime?.slice(11, 16)),
+        price: formatPrice(priceValue),
+        priceValue,
+        hall: screening.hall?.name || (typeof screening.hall === 'string' ? screening.hall : 'Zāle nav norādīta'),
+    }
+}
 
 const normalizeMovie = (payload) => {
     const genres = Array.isArray(payload.genres)
         ? payload.genres.map((genre) => genre.name || genre).filter(Boolean)
         : [payload.genre].filter(Boolean)
     const screenings = Array.isArray(payload.screenings) ? payload.screenings.map(normalizeScreening) : []
+    const screeningPrices = screenings
+        .map((screening) => screening.priceValue)
+        .filter((price) => price !== null)
+    const lowestScreeningPrice = screeningPrices.length ? Math.min(...screeningPrices) : null
     const nextScreening = payload.next_screening?.datetime ||
         [payload.next_screening?.date, payload.next_screening?.time].filter(Boolean).join(' ') ||
         payload.nextSession
@@ -723,7 +732,8 @@ const normalizeMovie = (payload) => {
         genresLabel: genres.length ? genres.join(', ') : 'Nav norādīts',
         ageRating: payload.ageRating || payload.age_restriction || 'Nav norādīts',
         rating: Number(payload.rating ?? payload.average_rating) || 0,
-        price: formatPrice(payload.price ?? payload.lowest_price ?? payload.minPrice),
+        price: lowestScreeningPrice === null ? null : formatPrice(lowestScreeningPrice),
+        priceLabel: lowestScreeningPrice === null ? 'Cena nav pieejama' : `no ${formatPrice(lowestScreeningPrice)}`,
         poster: payload.poster || payload.image || '',
         nextScreeningLabel: formatDateTime(nextScreening),
         screenings,

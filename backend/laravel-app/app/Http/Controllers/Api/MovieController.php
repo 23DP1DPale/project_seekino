@@ -150,7 +150,9 @@ class MovieController extends Controller
             ])
             ->orderBy('screening_date')
             ->orderBy('screening_time')
-            ->get();
+            ->get()
+            ->filter(fn (Screening $screening): bool => $this->isFutureScreening($screening))
+            ->values();
 
         return response()->json(
             $screenings->map(fn (Screening $screening): array => $this->screeningResponse($screening))->values()
@@ -163,6 +165,10 @@ class MovieController extends Controller
             'cinemaHall',
             'movieRecord',
         ]);
+
+        if (! $this->isFutureScreening($screening)) {
+            abort(404);
+        }
 
         $hall = $this->hallFor($screening);
         $movie = $this->movieFor($screening);
@@ -251,6 +257,7 @@ class MovieController extends Controller
 
         if ($includeDetails) {
             $response['screenings'] = $movie->screenings
+                ->filter(fn (Screening $screening): bool => $this->isFutureScreening($screening))
                 ->sortBy(fn (Screening $screening): string => "{$screening->screening_date} {$screening->screening_time}")
                 ->map(fn (Screening $screening): array => $this->screeningResponse($screening, includeMovie: false))
                 ->values();
@@ -300,10 +307,10 @@ class MovieController extends Controller
             ->sortBy(fn (Screening $screening): string => "{$screening->screening_date} {$screening->screening_time}")
             ->values();
 
-        $now = now();
+        $now = $this->currentDateTime();
         $screening = $sortedScreenings->first(function (Screening $screening) use ($now): bool {
-            return $this->screeningDateTime($screening)?->greaterThanOrEqualTo($now) ?? false;
-        }) ?? $sortedScreenings->first();
+            return $this->screeningDateTime($screening)?->greaterThan($now) ?? false;
+        });
 
         if (! $screening) {
             return null;
@@ -340,7 +347,20 @@ class MovieController extends Controller
             return null;
         }
 
-        return Carbon::parse("{$screening->screening_date->format('Y-m-d')} {$screening->screening_time}");
+        return Carbon::parse(
+            "{$screening->screening_date->format('Y-m-d')} {$screening->screening_time}",
+            config('app.timezone')
+        );
+    }
+
+    private function isFutureScreening(Screening $screening): bool
+    {
+        return $this->screeningDateTime($screening)?->greaterThan($this->currentDateTime()) ?? false;
+    }
+
+    private function currentDateTime(): Carbon
+    {
+        return Carbon::now(config('app.timezone'));
     }
 
     private function averageRating(Movie $movie): ?float

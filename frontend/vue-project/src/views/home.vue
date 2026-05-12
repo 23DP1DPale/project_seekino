@@ -310,7 +310,40 @@
                         </v-btn>
                     </div>
 
-                    <v-row>
+                    <div v-if="screeningsLoading" class="py-8 text-center">
+                        <v-progress-circular indeterminate color="#E50914" />
+                        <p class="movie-state-text mt-3 mb-0">Ielādē seansus...</p>
+                    </div>
+
+                    <v-alert
+                        v-else-if="screeningsError"
+                        type="error"
+                        variant="tonal"
+                        class="mb-4"
+                    >
+                        <div class="d-flex align-center justify-space-between flex-wrap ga-3">
+                            <span>{{ screeningsError }}</span>
+                            <v-btn
+                                variant="outlined"
+                                rounded="lg"
+                                class="text-none"
+                                @click="fetchUpcomingShows"
+                            >
+                                Mēģināt vēlreiz
+                            </v-btn>
+                        </div>
+                    </v-alert>
+
+                    <v-alert
+                        v-else-if="featuredShows.length === 0"
+                        type="info"
+                        variant="tonal"
+                        class="mb-4"
+                    >
+                        Šobrīd nav pieejamu seansu.
+                    </v-alert>
+
+                    <v-row v-else>
                         <v-col
                             v-for="show in featuredShows"
                             :key="show.id"
@@ -321,17 +354,27 @@
                             <v-card class="show-card h-100 rounded-xl pa-4">
                                 <div class="d-flex align-center justify-space-between mb-3">
                                     <v-chip size="small" color="#E50914" variant="flat">{{ show.date }}</v-chip>
-                                    <v-chip size="small" variant="outlined" class="show-price">{{ show.price }}€</v-chip>
+                                    <v-chip size="small" variant="outlined" class="show-price">{{ show.price }}</v-chip>
                                 </div>
                                 <h3 class="show-movie mb-2">{{ show.movie }}</h3>
                                 <p class="show-meta mb-1">
                                     <v-icon size="16" class="mr-1">mdi-clock-outline</v-icon>{{ show.time }}
                                 </p>
                                 <p class="show-meta mb-4">
-                                    <v-icon size="16" class="mr-1">mdi-sofa-outline</v-icon>{{ show.hall }} zāle |
-                                    {{ show.freeSeats }} brīvas vietas
+                                    <v-icon size="16" class="mr-1">mdi-sofa-outline</v-icon>{{ show.hall }}
+                                    <template v-if="show.freeSeats !== null">
+                                        | {{ show.freeSeats }} brīvas vietas
+                                    </template>
                                 </p>
-                                <v-btn color="#E50914" block rounded="lg" class="text-none">Izvēlēties vietas</v-btn>
+                                <v-btn
+                                    color="#E50914"
+                                    block
+                                    rounded="lg"
+                                    class="text-none"
+                                    :to="`/reservation/${show.id}`"
+                                >
+                                    Izvēlēties vietas
+                                </v-btn>
                             </v-card>
                         </v-col>
                     </v-row>
@@ -458,12 +501,9 @@ const movies = ref([])
 const moviesLoading = ref(false)
 const moviesError = ref('')
 
-const upcomingShows = ref([
-    { id: 1, movie: 'Klusuma kods', date: '17.02.2026', time: '18:30', price: 8, hall: '1.', freeSeats: 42 },
-    { id: 2, movie: 'Orbīta 9', date: '17.02.2026', time: '20:40', price: 10, hall: 'IMAX', freeSeats: 16 },
-    { id: 3, movie: 'Vasaras logs', date: '18.02.2026', time: '17:20', price: 7, hall: '2.', freeSeats: 58 },
-    { id: 4, movie: 'Smieklu terapija', date: '18.02.2026', time: '19:00', price: 6, hall: '3.', freeSeats: 64 },
-])
+const upcomingShows = ref([])
+const screeningsLoading = ref(false)
+const screeningsError = ref('')
 
 const displayedMovies = computed(() => movies.value.slice(0, 3))
 const featuredShows = computed(() => upcomingShows.value.slice(0, 4))
@@ -502,6 +542,46 @@ const extractMovies = (payload) => {
     return []
 }
 
+const formatScreeningDate = (value) => {
+    const [year, month, day] = String(value || '').slice(0, 10).split('-')
+    return year && month && day ? `${day}.${month}.${year}` : 'Datums nav norādīts'
+}
+
+const formatScreeningTime = (value) => String(value || 'Laiks nav norādīts').slice(0, 5)
+const formatScreeningPrice = (value) => `${Number(value || 0).toFixed(2)} €`
+
+const extractScreenings = (payload) => {
+    if (Array.isArray(payload)) {
+        return payload
+    }
+
+    if (Array.isArray(payload?.data)) {
+        return payload.data
+    }
+
+    if (Array.isArray(payload?.screenings)) {
+        return payload.screenings
+    }
+
+    return []
+}
+
+const readFreeSeatCount = (screening) => {
+    const freeSeats = screening.free_seats ?? screening.freeSeats ?? screening.available_seats ?? screening.availableSeats
+
+    return Number.isFinite(Number(freeSeats)) ? Number(freeSeats) : null
+}
+
+const normalizeScreening = (screening) => ({
+    id: screening.id,
+    movie: screening.movie?.title || screening.movie?.name || 'Filmas nosaukums nav pieejams',
+    date: formatScreeningDate(screening.screening_date || screening.date),
+    time: formatScreeningTime(screening.screening_time || screening.time),
+    hall: screening.hall?.name || 'Zāle nav norādīta',
+    price: formatScreeningPrice(screening.price ?? screening.cost),
+    freeSeats: readFreeSeatCount(screening),
+})
+
 const fetchPopularMovies = async () => {
     moviesLoading.value = true
     moviesError.value = ''
@@ -520,6 +600,31 @@ const fetchPopularMovies = async () => {
         moviesError.value = 'Populārākās filmas šobrīd neizdevās ielādēt.'
     } finally {
         moviesLoading.value = false
+    }
+}
+
+const fetchUpcomingShows = async () => {
+    screeningsLoading.value = true
+    screeningsError.value = ''
+
+    try {
+        const response = await fetch(`${apiBaseUrl}/api/screenings`, {
+            headers: {
+                Accept: 'application/json',
+            },
+        })
+
+        if (!response.ok) {
+            throw new Error('Neizdevās ielādēt seansus.')
+        }
+
+        const payload = await response.json()
+        upcomingShows.value = extractScreenings(payload).slice(0, 4).map(normalizeScreening)
+    } catch {
+        upcomingShows.value = []
+        screeningsError.value = 'Neizdevās ielādēt seansus.'
+    } finally {
+        screeningsLoading.value = false
     }
 }
 
@@ -589,7 +694,10 @@ const submitAuth = async () => {
             : 'Reģistrācijas forma gatava. Nākamais solis: savienot ar Laravel API.'
 }
 
-onMounted(fetchPopularMovies)
+onMounted(() => {
+    fetchPopularMovies()
+    fetchUpcomingShows()
+})
 
 </script>
 

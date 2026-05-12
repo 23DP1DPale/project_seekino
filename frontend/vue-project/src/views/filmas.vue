@@ -231,10 +231,20 @@
                             <p class="text-overline filter-kicker mb-1">Atlase</p>
                             <h2 class="section-title mb-0">{{ filteredMovies.length }} filmas</h2>
                         </div>
+                        <v-btn
+                            v-if="hasActiveFilters"
+                            variant="text"
+                            rounded="pill"
+                            class="text-none reset-filters-inline"
+                            prepend-icon="mdi-filter-remove-outline"
+                            @click="resetFilters"
+                        >
+                            Notīrīt filtrus
+                        </v-btn>
                     </div>
 
                     <v-row>
-                        <v-col cols="12" md="5">
+                        <v-col cols="12" md="3">
                             <v-text-field
                                 v-model="searchQuery"
                                 prepend-inner-icon="mdi-magnify"
@@ -243,11 +253,20 @@
                                 hide-details
                             />
                         </v-col>
-                        <v-col cols="12" sm="6" md="3">
+                        <v-col cols="12" sm="6" md="2">
                             <v-select
                                 v-model="selectedGenre"
                                 :items="genreOptions"
                                 label="Žanrs"
+                                variant="outlined"
+                                hide-details
+                            />
+                        </v-col>
+                        <v-col cols="12" sm="6" md="2">
+                            <v-select
+                                v-model="selectedAgeRating"
+                                :items="ageRatingOptions"
+                                label="Vecums"
                                 variant="outlined"
                                 hide-details
                             />
@@ -260,6 +279,26 @@
                                 variant="outlined"
                                 hide-details
                             />
+                        </v-col>
+                        <v-col cols="12" md="3">
+                            <div class="price-slider-control">
+                                <div class="d-flex align-center justify-space-between ga-3 mb-1">
+                                    <span class="price-slider-label">{{ priceFilterLabel }}</span>
+                                    <span class="price-slider-max">max {{ formatEuro(maxMoviePrice) }}</span>
+                                </div>
+                                <v-slider
+                                    v-model="selectedMaxPrice"
+                                    color="#E50914"
+                                    track-color="rgba(255, 255, 255, 0.22)"
+                                    thumb-color="#ffffff"
+                                    :min="0"
+                                    :max="maxMoviePrice"
+                                    :step="0.5"
+                                    hide-details
+                                    density="compact"
+                                    :disabled="maxMoviePrice === 0"
+                                />
+                            </div>
                         </v-col>
                     </v-row>
 
@@ -275,14 +314,6 @@
                         >
                             {{ filter.label }}
                         </v-chip>
-                        <v-btn
-                            variant="text"
-                            rounded="pill"
-                            class="text-none reset-filters-inline"
-                            @click="resetFilters"
-                        >
-                            Notīrīt filtrus
-                        </v-btn>
                     </div>
                 </v-card>
 
@@ -353,7 +384,6 @@
                                 />
                                 <div class="movie-session-row mt-4">
                                     <span>Nākamais seanss: {{ movie.nextSession || 'Nav ieplānots' }}</span>
-                                    <span>{{ (movie.formats || []).join(' | ') }}</span>
                                 </div>
                             </v-card-text>
                             <v-card-actions class="px-4 pb-4">
@@ -466,7 +496,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useAuth } from '@/services/auth'
 
@@ -474,6 +504,8 @@ const drawer = ref(false)
 const { user, isAuthenticated, authLoading: navAuthLoading, logout } = useAuth()
 const searchQuery = ref('')
 const selectedGenre = ref('Visi')
+const selectedAgeRating = ref('Visi')
+const selectedMaxPrice = ref(0)
 const sortBy = ref('Reitings')
 const authDialog = ref(false)
 const authMode = ref('login')
@@ -523,26 +555,69 @@ const defaultMoviePoster = 'https://images.unsplash.com/photo-1489599849927-2ee9
 const movies = ref([])
 const moviesLoading = ref(false)
 const moviesError = ref('')
+const defaultSort = 'Reitings'
+const ageRatingOptions = ['Visi', '7+', '12+', '13+', '16+', '18+']
+const sortOptions = [
+    'Reitings',
+    'Cena: augoši',
+    'Cena: dilstoši',
+    'Nosaukums A–Z',
+    'Nosaukums Z–A',
+    'Garums: īsākās',
+    'Garums: garākās',
+]
 
 const priceLabel = (price) => price === null || price === undefined || price === ''
     ? 'Cena nav pieejama'
     : `no ${Number(price).toFixed(2)} EUR`
 
+const formatEuro = (value) => `${Number(value || 0).toFixed(2)} €`
+
+const numericValue = (value) => {
+    const number = Number(value)
+
+    return Number.isFinite(number) ? number : null
+}
+
+const formatDateTime = (value) => {
+    if (!value) return null
+
+    const normalized = String(value).replace('T', ' ')
+    const [date, time] = normalized.split(' ')
+    const [year, month, day] = String(date || '').split('-')
+    const formattedTime = String(time || '').slice(0, 5)
+
+    if (!year || !month || !day || !formattedTime) {
+        return normalized.slice(0, 16)
+    }
+
+    return `${day}.${month}.${year}. ${formattedTime}`
+}
+
 const normalizeMovie = (movie) => {
     const genre = movie.genre || movie.genres?.find((item) => item.primary)?.name || movie.genres?.[0]?.name
+    const hasFutureScreening = Boolean(movie.next_screening || movie.nextSession)
+    const nextSession = movie.next_screening?.datetime ||
+        [movie.next_screening?.date, movie.next_screening?.time].filter(Boolean).join(' ') ||
+        movie.nextSession
+    const price = hasFutureScreening
+        ? numericValue(movie.next_screening?.price ?? movie.price ?? movie.minPrice ?? movie.lowest_price)
+        : null
+    const rating = numericValue(movie.rating ?? movie.average_rating) ?? 0
+    const duration = numericValue(movie.duration ?? movie.length)
 
     return {
         id: movie.id,
-        title: movie.title,
-        director: movie.director,
-        duration: movie.duration,
+        title: movie.title || movie.name || 'Filmas nosaukums nav pieejams',
+        director: movie.director || 'Režisors nav norādīts',
+        duration,
         genre: genre || 'Žanrs nav norādīts',
-        ageRating: movie.ageRating,
-        rating: movie.rating,
-        price: movie.price,
-        priceLabel: priceLabel(movie.price),
+        ageRating: movie.ageRating || movie.age_restriction || 'Nav norādīts',
+        rating,
+        price,
+        priceLabel: priceLabel(price),
         poster: movie.poster || movie.image || defaultMoviePoster,
-        nextSession: movie.nextSession,
+        nextSession: formatDateTime(nextSession),
         formats: movie.formats || [],
         description: movie.description,
     }
@@ -576,8 +651,39 @@ const fetchMovies = async () => {
 onMounted(fetchMovies)
 
 const genreOptions = computed(() => ['Visi', ...new Set(movies.value.map((movie) => movie.genre).filter(Boolean))])
-const sortOptions = ['Reitings', 'Cena augoši', 'Cena dilstoši', 'Ilgums']
 const quickGenres = computed(() => genreOptions.value.filter((genre) => genre !== 'Visi').slice(0, 4))
+const maxMoviePrice = computed(() => {
+    const prices = movies.value
+        .map((movie) => movie.price)
+        .filter((price) => price !== null && price !== undefined)
+
+    return prices.length ? Math.ceil(Math.max(...prices)) : 0
+})
+const isPriceFilterActive = computed(() => selectedMaxPrice.value < maxMoviePrice.value)
+const priceFilterLabel = computed(() => `Cena: līdz ${formatEuro(selectedMaxPrice.value)}`)
+
+watch(maxMoviePrice, (maxPrice, previousMaxPrice) => {
+    if (selectedMaxPrice.value === previousMaxPrice || selectedMaxPrice.value > maxPrice) {
+        selectedMaxPrice.value = maxPrice
+    }
+}, { immediate: true })
+
+const matchesPrice = (price) => {
+    if (!isPriceFilterActive.value) return true
+
+    return price !== null && price !== undefined && price <= selectedMaxPrice.value
+}
+
+const compareNullableNumber = (left, right, direction = 'asc') => {
+    const leftMissing = left === null || left === undefined
+    const rightMissing = right === null || right === undefined
+
+    if (leftMissing && rightMissing) return 0
+    if (leftMissing) return 1
+    if (rightMissing) return -1
+
+    return direction === 'asc' ? left - right : right - left
+}
 
 const filteredMovies = computed(() => {
     const query = searchQuery.value.trim().toLowerCase()
@@ -588,14 +694,20 @@ const filteredMovies = computed(() => {
             movie.title?.toLowerCase().includes(query) ||
             movie.director?.toLowerCase().includes(query)
         const matchesGenre = selectedGenre.value === 'Visi' || movie.genre === selectedGenre.value
+        const matchesAgeRating = selectedAgeRating.value === 'Visi' || movie.ageRating === selectedAgeRating.value
+        const matchesPriceFilter = matchesPrice(movie.price)
 
-        return matchesQuery && matchesGenre
+        return matchesQuery && matchesGenre && matchesAgeRating && matchesPriceFilter
     })
 
     return result.sort((a, b) => {
-        if (sortBy.value === 'Cena augoši') return (a.price ?? 0) - (b.price ?? 0)
-        if (sortBy.value === 'Cena dilstoši') return (b.price ?? 0) - (a.price ?? 0)
-        if (sortBy.value === 'Ilgums') return (b.duration ?? 0) - (a.duration ?? 0)
+        if (sortBy.value === 'Cena: augoši') return compareNullableNumber(a.price, b.price)
+        if (sortBy.value === 'Cena: dilstoši') return compareNullableNumber(a.price, b.price, 'desc')
+        if (sortBy.value === 'Nosaukums A–Z') return a.title.localeCompare(b.title, 'lv')
+        if (sortBy.value === 'Nosaukums Z–A') return b.title.localeCompare(a.title, 'lv')
+        if (sortBy.value === 'Garums: īsākās') return compareNullableNumber(a.duration, b.duration)
+        if (sortBy.value === 'Garums: garākās') return compareNullableNumber(a.duration, b.duration, 'desc')
+
         return (b.rating ?? 0) - (a.rating ?? 0)
     })
 })
@@ -615,12 +727,21 @@ const activeFilters = computed(() => {
         filters.push({ key: 'genre', label: selectedGenre.value })
     }
 
-    if (sortBy.value !== 'Reitings') {
+    if (selectedAgeRating.value !== 'Visi') {
+        filters.push({ key: 'age', label: `Vecums: ${selectedAgeRating.value}` })
+    }
+
+    if (isPriceFilterActive.value) {
+        filters.push({ key: 'price', label: priceFilterLabel.value })
+    }
+
+    if (sortBy.value !== defaultSort) {
         filters.push({ key: 'sort', label: `Kārtot: ${sortBy.value}` })
     }
 
     return filters
 })
+const hasActiveFilters = computed(() => activeFilters.value.length > 0)
 
 const isEmailValid = (value) => /^\S+@\S+\.\S+$/.test(value)
 
@@ -691,13 +812,17 @@ const submitAuth = async () => {
 const resetFilters = () => {
     searchQuery.value = ''
     selectedGenre.value = 'Visi'
-    sortBy.value = 'Reitings'
+    selectedAgeRating.value = 'Visi'
+    selectedMaxPrice.value = maxMoviePrice.value
+    sortBy.value = defaultSort
 }
 
 const removeFilter = (key) => {
     if (key === 'search') searchQuery.value = ''
     if (key === 'genre') selectedGenre.value = 'Visi'
-    if (key === 'sort') sortBy.value = 'Reitings'
+    if (key === 'age') selectedAgeRating.value = 'Visi'
+    if (key === 'price') selectedMaxPrice.value = maxMoviePrice.value
+    if (key === 'sort') sortBy.value = defaultSort
 }
 </script>
 
@@ -968,6 +1093,23 @@ const removeFilter = (key) => {
 
 .filter-card :deep(.v-label.v-field-label) {
     opacity: 0.85;
+}
+
+.price-slider-control {
+    min-height: 56px;
+    padding-top: 3px;
+}
+
+.price-slider-label {
+    color: #f4f6fb;
+    font-size: 0.86rem;
+    font-weight: 700;
+}
+
+.price-slider-max {
+    color: #acb7cf;
+    font-size: 0.78rem;
+    white-space: nowrap;
 }
 
 .active-filters {

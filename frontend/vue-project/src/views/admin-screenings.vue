@@ -161,7 +161,19 @@
               <v-card class="admin-card pa-4 pa-md-5">
                 <div class="d-flex align-center justify-space-between flex-wrap ga-3 mb-4">
                   <h2 class="panel-title mb-0">Seansu saraksts</h2>
-                  <v-chip class="user-chip" size="small">{{ screenings.length }} seansi</v-chip>
+                  <div class="d-flex align-center flex-wrap ga-3">
+                    <v-switch
+                      v-model="includePastScreenings"
+                      color="#E50914"
+                      density="compact"
+                      hide-details
+                      label="Rādīt vecos seansus"
+                      class="archive-switch"
+                      :disabled="screeningsLoading"
+                      @update:model-value="fetchScreenings"
+                    />
+                    <v-chip class="user-chip" size="small">{{ screenings.length }} seansi</v-chip>
+                  </div>
                 </div>
 
                 <div v-if="screeningsLoading" class="py-8 text-center">
@@ -242,6 +254,7 @@ const screeningsError = ref('')
 const formLoading = ref(false)
 const deleteLoadingId = ref(null)
 const editingScreeningId = ref(null)
+const includePastScreenings = ref(false)
 const successMessage = ref('')
 const errorMessage = ref('')
 const form = ref(emptyForm())
@@ -369,7 +382,8 @@ const fetchScreenings = async () => {
   screeningsError.value = ''
 
   try {
-    const response = await fetch(`${apiBaseUrl}/api/admin/screenings`, {
+    const query = includePastScreenings.value ? '?include_past=1' : ''
+    const response = await fetch(`${apiBaseUrl}/api/admin/screenings${query}`, {
       headers: authHeaders(),
     })
     const data = await response.json().catch(() => ({}))

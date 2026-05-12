@@ -7,6 +7,7 @@ use App\Models\ApiToken;
 use App\Models\Hall;
 use App\Models\Screening;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -26,7 +27,15 @@ class AdminScreeningController extends Controller
             ->with(['movieRecord', 'cinemaHall'])
             ->orderBy('screening_date')
             ->orderBy('screening_time')
-            ->get()
+            ->get();
+
+        if (! $request->boolean('include_past')) {
+            $screenings = $screenings
+                ->filter(fn (Screening $screening): bool => $this->isFutureScreening($screening))
+                ->values();
+        }
+
+        $screenings = $screenings
             ->map(fn (Screening $screening): array => $this->screeningResponse($screening))
             ->values();
 
@@ -246,6 +255,28 @@ class AdminScreeningController extends Controller
         return response()->json([
             'ziņa' => 'Autentifikācijas tokens nav derīgs vai nav norādīts.',
         ], 401);
+    }
+
+    private function isFutureScreening(Screening $screening): bool
+    {
+        return $this->screeningDateTime($screening)?->greaterThan($this->currentDateTime()) ?? false;
+    }
+
+    private function screeningDateTime(Screening $screening): ?Carbon
+    {
+        if (! $screening->screening_date || ! $screening->screening_time) {
+            return null;
+        }
+
+        return Carbon::parse(
+            "{$screening->screening_date->format('Y-m-d')} {$screening->screening_time}",
+            config('app.timezone')
+        );
+    }
+
+    private function currentDateTime(): Carbon
+    {
+        return Carbon::now(config('app.timezone'));
     }
 
     private function screeningResponse(Screening $screening): array

@@ -32,6 +32,81 @@
             </div>
           </v-card>
 
+          <v-card class="profile-data-card pa-4 pa-md-5 mb-6">
+            <div class="d-flex align-center justify-space-between flex-wrap ga-3 mb-4">
+              <h2 class="section-title mb-0">Profila dati</h2>
+              <v-btn
+                v-if="!profileEditing"
+                variant="outlined"
+                rounded="lg"
+                class="text-none retry-btn"
+                prepend-icon="mdi-account-edit-outline"
+                @click="startProfileEdit"
+              >
+                Rediģēt profilu
+              </v-btn>
+            </div>
+
+            <v-alert v-if="profileSuccess" type="success" variant="tonal" class="mb-4">
+              {{ profileSuccess }}
+            </v-alert>
+
+            <v-alert v-if="profileError" type="error" variant="tonal" class="mb-4">
+              {{ profileError }}
+            </v-alert>
+
+            <div v-if="!profileEditing" class="details-list">
+              <div class="detail-row">
+                <span>Segvārds</span>
+                <strong>{{ user?.nickname }}</strong>
+              </div>
+              <div class="detail-row">
+                <span>E-pasts</span>
+                <strong>{{ user?.email }}</strong>
+              </div>
+            </div>
+
+            <v-form v-else @submit.prevent="saveProfile">
+              <v-text-field
+                v-model="profileForm.nickname"
+                label="Segvārds"
+                variant="outlined"
+                prepend-inner-icon="mdi-account-outline"
+                class="mb-3"
+                :disabled="profileSaving"
+              />
+              <v-text-field
+                v-model="profileForm.email"
+                label="E-pasts"
+                type="email"
+                variant="outlined"
+                prepend-inner-icon="mdi-email-outline"
+                class="mb-4"
+                :disabled="profileSaving"
+              />
+              <div class="d-flex flex-wrap ga-3">
+                <v-btn
+                  type="submit"
+                  color="#E50914"
+                  rounded="lg"
+                  class="text-none login-btn"
+                  :loading="profileSaving"
+                >
+                  Saglabāt izmaiņas
+                </v-btn>
+                <v-btn
+                  variant="outlined"
+                  rounded="lg"
+                  class="text-none retry-btn"
+                  :disabled="profileSaving"
+                  @click="cancelProfileEdit"
+                >
+                  Atcelt
+                </v-btn>
+              </div>
+            </v-form>
+          </v-card>
+
           <section class="reservations-section">
             <div class="d-flex align-center justify-space-between flex-wrap ga-3 mb-4">
               <h2 class="section-title">Manas rezervācijas</h2>
@@ -184,7 +259,7 @@ import { apiBaseUrl, useAuth } from '@/services/auth'
 
 const router = useRouter()
 const drawer = ref(false)
-const { token, user, isAuthenticated, authLoading, fetchMe, logout, clearSession } = useAuth()
+const { token, user, isAuthenticated, authLoading, fetchMe, logout, clearSession, updateStoredUser } = useAuth()
 const reservations = ref([])
 const reservationsLoading = ref(false)
 const reservationsError = ref('')
@@ -192,6 +267,14 @@ const reservationsMessage = ref('')
 const cancellationSuccess = ref('')
 const cancellationError = ref('')
 const cancelingReservationId = ref(null)
+const profileEditing = ref(false)
+const profileSaving = ref(false)
+const profileSuccess = ref('')
+const profileError = ref('')
+const profileForm = ref({
+  nickname: '',
+  email: '',
+})
 const activeReservations = computed(() => reservations.value.filter((reservation) => !reservation.isCancelled))
 const cancelledReservations = computed(() => reservations.value.filter((reservation) => reservation.isCancelled))
 
@@ -244,6 +327,77 @@ const paymentStatusLabel = (status) => {
 }
 
 const responseErrorMessage = (payload) => payload?.ziņa || payload?.message || 'Pieprasījumu neizdevās izpildīt.'
+
+const profileResponseErrorMessage = (payload) => {
+  if (payload?.kļūdas && typeof payload.kļūdas === 'object') {
+    const firstError = Object.values(payload.kļūdas).flat().find(Boolean)
+
+    if (firstError) {
+      return firstError
+    }
+  }
+
+  return responseErrorMessage(payload)
+}
+
+const resetProfileForm = () => {
+  profileForm.value = {
+    nickname: user.value?.nickname || '',
+    email: user.value?.email || '',
+  }
+}
+
+const startProfileEdit = () => {
+  profileSuccess.value = ''
+  profileError.value = ''
+  resetProfileForm()
+  profileEditing.value = true
+}
+
+const cancelProfileEdit = () => {
+  profileError.value = ''
+  resetProfileForm()
+  profileEditing.value = false
+}
+
+const saveProfile = async () => {
+  const accessToken = localStorage.getItem('seekino_token') || token.value
+
+  if (!accessToken) {
+    profileError.value = 'Lai atjauninātu profilu, nepieciešams pieslēgties.'
+    return
+  }
+
+  profileSaving.value = true
+  profileSuccess.value = ''
+  profileError.value = ''
+
+  try {
+    const response = await fetch(`${apiBaseUrl}/api/profile`, {
+      method: 'PUT',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify(profileForm.value),
+    })
+    const data = await response.json().catch(() => ({}))
+
+    if (!response.ok) {
+      throw new Error(profileResponseErrorMessage(data))
+    }
+
+    updateStoredUser(data.lietotājs)
+    profileSuccess.value = data.ziņa || 'Profils veiksmīgi atjaunināts.'
+    profileEditing.value = false
+    resetProfileForm()
+  } catch (caughtError) {
+    profileError.value = caughtError.message || 'Profilu neizdevās atjaunināt.'
+  } finally {
+    profileSaving.value = false
+  }
+}
 
 const seatLabel = (seat) => {
   const rowNumber = Number(seat.row_number)
@@ -358,6 +512,7 @@ onMounted(async () => {
       await fetchMe()
     }
 
+    resetProfileForm()
     await fetchReservations()
   } catch {
     clearSession()
@@ -436,12 +591,20 @@ onMounted(async () => {
 
 .state-card,
 .profile-hero,
+.profile-data-card,
 .reservation-card {
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 16px;
   background: linear-gradient(165deg, rgba(18, 23, 36, 0.96), rgba(12, 15, 24, 0.96));
   color: #edf2ff;
   box-shadow: 0 22px 58px rgba(0, 0, 0, 0.34);
+}
+
+.profile-data-card :deep(.v-field),
+.profile-data-card :deep(.v-label),
+.profile-data-card :deep(.v-field__input),
+.profile-data-card :deep(.v-icon) {
+  color: #edf2ff;
 }
 
 .state-icon {

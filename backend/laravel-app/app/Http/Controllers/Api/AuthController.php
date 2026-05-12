@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class AuthController extends Controller
 {
@@ -115,6 +116,44 @@ class AuthController extends Controller
 
         return response()->json([
             'ziņa' => 'Atslēgšanās veiksmīga.',
+        ]);
+    }
+
+    public function updateProfile(Request $request): JsonResponse
+    {
+        $token = $this->tokenFromRequest($request);
+
+        if (! $token) {
+            return $this->unauthenticatedResponse();
+        }
+
+        $apiToken = $this->findApiToken($token);
+
+        if (! $apiToken) {
+            return $this->unauthenticatedResponse();
+        }
+
+        $user = $apiToken->user;
+
+        $validator = Validator::make($request->all(), [
+            'nickname' => ['required', 'string', 'max:50'],
+            'email' => ['required', 'string', 'email', 'max:100', Rule::unique('users', 'email')->ignore($user->id)],
+        ], $this->messages());
+
+        if ($validator->fails()) {
+            return $this->validationError($validator->errors()->toArray());
+        }
+
+        $user->forceFill([
+            'nickname' => $request->input('nickname'),
+            'email' => $request->input('email'),
+        ])->save();
+
+        $apiToken->forceFill(['last_used_at' => now()])->save();
+
+        return response()->json([
+            'ziņa' => 'Profils veiksmīgi atjaunināts.',
+            'lietotājs' => $this->userResponse($user->fresh()),
         ]);
     }
 

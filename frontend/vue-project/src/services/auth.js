@@ -32,6 +32,11 @@ function clearSession() {
   localStorage.removeItem('seekino_user')
 }
 
+function updateStoredUser(nextUser) {
+  user.value = nextUser
+  localStorage.setItem('seekino_user', JSON.stringify(nextUser))
+}
+
 async function requestJson(path, options = {}) {
   const response = await fetch(`${apiBaseUrl}${path}`, {
     headers: {
@@ -73,8 +78,7 @@ async function fetchMe() {
     },
   })
 
-  user.value = payload.lietotājs
-  localStorage.setItem('seekino_user', JSON.stringify(payload.lietotājs))
+  updateStoredUser(payload.lietotājs)
 
   return payload.lietotājs
 }
@@ -168,5 +172,6 @@ export function useAuth() {
     fetchMe,
     logout,
     clearSession,
+    updateStoredUser,
   }
 }

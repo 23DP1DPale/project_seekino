@@ -11,7 +11,7 @@
                             Vienuviet pieejami aktuālie seansi, sēdvietu izvēle, populāras filmas un lietotāju vērtējumi.
                         </p>
                         <div class="d-flex flex-wrap ga-3">
-                            <v-btn color="#E50914" size="large" rounded="lg" class="text-none">Apskatīt seansus</v-btn>
+                            <v-btn color="#E50914" size="large" rounded="lg" class="text-none" to="/seansi">Apskatīt seansus</v-btn>
                         </div>
                     </div>
                 </v-container>

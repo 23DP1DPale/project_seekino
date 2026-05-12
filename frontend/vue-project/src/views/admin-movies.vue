@@ -1,24 +1,5 @@
 <template>
-  <v-app class="admin-page">
-    <v-app-bar color="#101114" flat location="top" height="76" class="sticky-app-bar app-bar-shell">
-      <v-container class="d-flex align-center px-2 px-md-6 app-bar-inner">
-        <RouterLink to="/" class="brand-link ml-2">
-          <v-img src="/img/logo_seekino.png" width="160" height="52" class="logo brand-logo" />
-        </RouterLink>
-
-        <v-spacer />
-
-        <div class="nav-pages ga-2 mr-2">
-          <v-btn variant="text" class="text-none nav-link-btn" to="/filmas">Filmas</v-btn>
-          <v-btn variant="text" class="text-none nav-link-btn" to="/seansi">Seansi</v-btn>
-          <v-btn variant="text" class="text-none nav-link-btn" to="/profile">Profils</v-btn>
-        </div>
-
-        <v-chip v-if="user" class="user-chip" prepend-icon="mdi-shield-account-outline">
-          {{ user.nickname }}
-        </v-chip>
-      </v-container>
-    </v-app-bar>
+  <div class="admin-page">
 
     <v-main class="main-content">
       <v-container class="py-8 py-md-10">
@@ -217,12 +198,12 @@
         </template>
       </v-container>
     </v-main>
-  </v-app>
+  </div>
 </template>
 
 <script setup>
 import { onMounted, ref } from 'vue'
-import { RouterLink, useRouter } from 'vue-router'
+import { useRouter } from 'vue-router'
 import { apiBaseUrl, useAuth } from '@/services/auth'
 
 const router = useRouter()

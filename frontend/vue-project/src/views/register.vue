@@ -1,23 +1,5 @@
 <template>
   <v-app class="auth-page">
-    <v-app-bar color="#101114" flat location="top" height="76" class="sticky-app-bar app-bar-shell">
-      <v-container class="d-flex align-center px-2 px-md-6 app-bar-inner">
-        <RouterLink to="/" class="brand-link ml-2">
-          <v-img src="/img/logo_seekino.png" width="160" height="52" class="logo brand-logo" />
-        </RouterLink>
-
-        <v-spacer />
-
-        <div class="d-none d-sm-flex ga-2 mr-2">
-          <v-btn variant="text" class="text-none nav-link-btn" to="/filmas">Filmas</v-btn>
-          <v-btn variant="text" class="text-none nav-link-btn" to="/seansi">Seansi</v-btn>
-        </div>
-
-        <v-btn rounded="xl" class="text-none login-btn" prepend-icon="mdi-account-circle-outline" to="/login">
-          Pieslēgties
-        </v-btn>
-      </v-container>
-    </v-app-bar>
 
     <v-main class="auth-main">
       <v-container class="auth-container py-10 py-md-14">

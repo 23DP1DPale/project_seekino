@@ -1,85 +1,5 @@
 <template>
-  <v-app class="profile-page">
-    <v-app-bar
-      color="#101114"
-      flat
-      location="top"
-      height="76"
-      scroll-behavior="elevate"
-      class="sticky-app-bar app-bar-shell"
-    >
-      <v-container class="d-flex align-center px-2 px-md-6 app-bar-inner">
-        <v-app-bar-nav-icon class="nav-btn mr-1" variant="text" @click.stop="drawer = !drawer" />
-
-        <RouterLink to="/" class="brand-link ml-2">
-          <v-img src="/img/logo_seekino.png" width="160" height="52" class="logo brand-logo" />
-        </RouterLink>
-
-        <v-spacer />
-
-        <div class="ga-2 mr-2 nav-pages">
-          <v-btn variant="text" class="text-none nav-link-btn" to="/filmas">Filmas</v-btn>
-          <v-btn variant="text" class="text-none nav-link-btn" to="/seansi">Seansi</v-btn>
-        </div>
-
-        <template v-if="isAuthenticated">
-          <v-chip class="user-chip mr-2" prepend-icon="mdi-account-circle-outline" to="/profile" link>
-            {{ user?.nickname }}
-          </v-chip>
-          <v-btn
-            rounded="xl"
-            class="text-none login-btn"
-            prepend-icon="mdi-logout"
-            :loading="authLoading"
-            @click="handleLogout"
-          >
-            Izrakstīties
-          </v-btn>
-        </template>
-        <template v-else>
-          <v-btn variant="text" class="text-none nav-link-btn" to="/register">Reģistrēties</v-btn>
-          <v-btn rounded="xl" class="text-none login-btn" prepend-icon="mdi-account-circle-outline" to="/login">
-            Pieslēgties
-          </v-btn>
-        </template>
-      </v-container>
-    </v-app-bar>
-
-    <v-navigation-drawer
-      v-model="drawer"
-      temporary
-      scrim="rgba(0, 0, 0, 0.82)"
-      color="#101114"
-      location="left"
-      width="320"
-      class="position-fixed app-drawer"
-    >
-      <div class="drawer-header px-4 py-5">
-        <v-btn icon="mdi-close" variant="text" size="small" class="drawer-close-btn" @click="drawer = false" />
-      </div>
-
-      <v-divider />
-
-      <v-list nav class="drawer-list px-3 py-4">
-        <template v-for="group in menuGroups" :key="group.title">
-          <v-list-subheader class="drawer-group-label px-2">
-            {{ group.title }}
-          </v-list-subheader>
-          <v-list-item
-            v-for="item in group.items"
-            :key="item.title"
-            :to="item.to"
-            :prepend-icon="item.icon"
-            :title="item.title"
-            link
-            rounded="lg"
-            class="drawer-list-item"
-            @click="drawer = false"
-          />
-          <v-divider v-if="!group.isLast" class="drawer-group-divider my-4" />
-        </template>
-      </v-list>
-    </v-navigation-drawer>
+  <div class="profile-page">
 
     <v-main class="main-content">
       <v-container class="py-8 py-md-10">
@@ -254,7 +174,7 @@
         </template>
       </v-container>
     </v-main>
-  </v-app>
+  </div>
 </template>
 
 <script setup>
@@ -425,7 +345,7 @@ const cancelReservation = async (reservation) => {
 
 const handleLogout = async () => {
   await logout()
-  router.push('/login')
+  router.push('/')
 }
 
 onMounted(async () => {
@@ -468,7 +388,6 @@ onMounted(async () => {
 }
 
 .main-content {
-  min-height: 100vh;
   background:
     radial-gradient(circle at 12% 18%, rgba(68, 111, 203, 0.34), transparent 42%),
     radial-gradient(circle at 82% 14%, rgba(220, 54, 88, 0.3), transparent 38%),

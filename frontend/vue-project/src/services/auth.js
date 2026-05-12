@@ -149,6 +149,8 @@ async function logout() {
         Authorization: `Bearer ${currentToken}`,
       },
     })
+  } catch {
+    // Lokālo sesiju notīrām arī tad, ja servera logout pieprasījums neizdodas.
   } finally {
     authLoading.value = false
     clearSession()

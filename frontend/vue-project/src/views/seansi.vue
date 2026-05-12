@@ -1,88 +1,5 @@
 <template>
-    <v-app class="screenings-page">
-        <v-app-bar color="#101114" flat location="top" height="76" scroll-behavior="elevate" class="sticky-app-bar app-bar-shell">
-            <v-container class="d-flex align-center px-2 px-md-6 app-bar-inner">
-                <v-app-bar-nav-icon class="nav-btn mr-1" variant="text" @click.stop="drawer = !drawer" />
-                <RouterLink to="/" class="brand-link ml-2">
-                    <v-img src="/img/logo_seekino.png" width="160" height="52" class="logo brand-logo" />
-                </RouterLink>
-                <v-spacer />
-                <div class="ga-2 mr-2 nav-pages">
-                    <v-btn variant="text" class="text-none nav-link-btn" to="/filmas">Filmas</v-btn>
-                    <v-btn variant="text" class="text-none nav-link-btn" to="/seansi">Seansi</v-btn>
-                </div>
-                <template v-if="isAuthenticated">
-                    <v-chip class="user-chip mr-2" prepend-icon="mdi-account-circle-outline" to="/profile" link>{{ user?.nickname }}</v-chip>
-                    <v-btn rounded="xl" class="text-none login-btn" prepend-icon="mdi-logout" :loading="navAuthLoading" @click="logout">Izrakstīties</v-btn>
-                </template>
-                <template v-else>
-                    <v-btn variant="text" class="text-none nav-link-btn" to="/register">Reģistrēties</v-btn>
-                    <v-btn rounded="xl" class="text-none login-btn" prepend-icon="mdi-account-circle-outline" to="/login">Pieslēgties</v-btn>
-                </template>
-            </v-container>
-        </v-app-bar>
-
-        <v-navigation-drawer v-model="drawer" temporary scrim="rgba(0, 0, 0, 0.82)" color="#101114" location="left" width="320" class="position-fixed app-drawer">
-            <div class="drawer-header px-4 py-5">
-                <v-btn icon="mdi-close" variant="text" size="small" class="drawer-close-btn" @click="drawer = false" />
-            </div>
-            <v-divider />
-            <v-list nav class="drawer-list px-3 py-4">
-                <template v-for="group in menuGroups" :key="group.title">
-                    <v-list-subheader class="drawer-group-label px-2">{{ group.title }}</v-list-subheader>
-                    <v-list-item
-                        v-for="item in group.items"
-                        :key="item.title"
-                        :to="item.to || undefined"
-                        :prepend-icon="item.icon"
-                        :title="item.title"
-                        link
-                        rounded="lg"
-                        class="drawer-list-item"
-                        @click="drawer = false"
-                    />
-                    <v-divider v-if="!group.isLast" class="drawer-group-divider my-4" />
-                </template>
-            </v-list>
-        </v-navigation-drawer>
-
-        <v-dialog v-model="authDialog" max-width="500">
-            <v-card class="auth-dialog-card rounded-xl">
-                <v-card-title class="d-flex align-center justify-space-between">
-                    <span>{{ authMode === 'login' ? 'Pieslēgties kontam' : 'Izveidot kontu' }}</span>
-                    <v-btn icon="mdi-close" variant="text" @click="closeAuth" />
-                </v-card-title>
-                <v-card-text class="pt-2">
-                    <v-alert v-if="authError" type="error" density="comfortable" variant="tonal" class="mb-3">{{ authError }}</v-alert>
-                    <v-alert v-if="authSuccess" type="success" density="comfortable" variant="tonal" class="mb-3">{{ authSuccess }}</v-alert>
-                    <v-form @submit.prevent="submitAuth">
-                        <transition name="auth-switch" mode="out-in">
-                            <div :key="authMode">
-                                <template v-if="authMode === 'login'">
-                                    <v-text-field v-model="loginForm.email" label="E-pasts" type="email" variant="outlined" prepend-inner-icon="mdi-email-outline" class="mb-3" />
-                                    <v-text-field v-model="loginForm.password" label="Parole" type="password" variant="outlined" prepend-inner-icon="mdi-lock-outline" class="mb-2" />
-                                </template>
-                                <template v-else>
-                                    <v-text-field v-model="registerForm.name" label="Vārds" variant="outlined" prepend-inner-icon="mdi-account-outline" class="mb-3" />
-                                    <v-text-field v-model="registerForm.email" label="E-pasts" type="email" variant="outlined" prepend-inner-icon="mdi-email-outline" class="mb-3" />
-                                    <v-text-field v-model="registerForm.password" label="Parole" type="password" variant="outlined" prepend-inner-icon="mdi-lock-outline" class="mb-3" />
-                                    <v-text-field v-model="registerForm.confirmPassword" label="Atkārto paroli" type="password" variant="outlined" prepend-inner-icon="mdi-lock-check-outline" class="mb-2" />
-                                </template>
-                            </div>
-                        </transition>
-                        <v-btn type="submit" color="#E50914" block rounded="lg" class="text-none mt-2" :loading="authLoading">
-                            {{ authMode === 'login' ? 'Pieslēgties' : 'Izveidot kontu' }}
-                        </v-btn>
-                    </v-form>
-                    <p class="text-caption mt-4 mb-0">
-                        {{ authMode === 'login' ? 'Nav konta?' : 'Jau ir konts?' }}
-                        <a href="#" class="auth-switch-link" @click.prevent="switchAuth(authMode === 'login' ? 'register' : 'login')">
-                            {{ authMode === 'login' ? 'Reģistrējies' : 'Pieslēdzies' }}
-                        </a>
-                    </p>
-                </v-card-text>
-            </v-card>
-        </v-dialog>
+    <div class="screenings-page">
 
         <v-main class="main-content">
             <section class="hero-section">
@@ -152,9 +69,14 @@
                             <h3 class="screening-title mb-4">{{ screening.movieTitle }}</h3>
                             <div class="screening-meta">
                                 <p class="mb-2"><v-icon size="18" class="mr-2">mdi-clock-outline</v-icon>{{ screening.time }}</p>
-                                <p class="mb-0"><v-icon size="18" class="mr-2">mdi-sofa-outline</v-icon>{{ screening.hallName }}</p>
+                                <p class="mb-0">
+                                    <v-icon size="18" class="mr-2">mdi-sofa-outline</v-icon>{{ screening.hallName }}
+                                    <template v-if="screening.availableSeats !== null">
+                                        | {{ screening.availableSeats }} brīvas vietas
+                                    </template>
+                                </p>
                             </div>
-                            <v-btn color="#E50914" block rounded="lg" class="text-none mt-5" append-icon="mdi-arrow-right" :to="`/reservation/${screening.id}`">
+                            <v-btn color="#E50914" block rounded="lg" class="text-none mt-5" :to="`/reservation/${screening.id}?from=seansi`">
                                 Rezervēt biļeti
                             </v-btn>
                         </v-card>
@@ -162,43 +84,7 @@
                 </v-row>
             </v-container>
         </v-main>
-
-        <v-footer class="site-footer pa-0">
-            <v-container class="py-10">
-                <v-row class="ga-0">
-                    <v-col cols="12" md="4" class="pr-md-8">
-                        <v-img src="/img/logo_seekino.png" max-width="160" height="52" class="logo mb-3" />
-                        <p class="footer-text mb-4">
-                            Mūsdienīga kino biļešu platforma ar ērtu rezervāciju, seansu pārskatu un filmu atlasi pēc
-                            tavām vēlmēm.
-                        </p>
-                        <div class="d-flex ga-2">
-                            <v-btn v-for="icon in socialIcons" :key="icon" :icon="icon" size="small" variant="outlined" class="footer-social-btn" />
-                        </div>
-                    </v-col>
-                    <v-col cols="6" md="2">
-                        <h4 class="footer-heading mb-3">Navigācija</h4>
-                        <v-list density="compact" class="footer-list pa-0">
-                            <v-list-item v-for="link in footerNavLinks" :key="link.title" :to="link.to" :title="link.title" class="px-0" />
-                        </v-list>
-                    </v-col>
-                    <v-col cols="6" md="3">
-                        <h4 class="footer-heading mb-3">Lietotājiem</h4>
-                        <v-list density="compact" class="footer-list pa-0">
-                            <v-list-item v-for="link in footerUserLinks" :key="link.title" :to="link.to || undefined" :title="link.title" class="px-0" />
-                        </v-list>
-                    </v-col>
-                    <v-col cols="12" md="3">
-                        <h4 class="footer-heading mb-3">Kontakti</h4>
-                        <p class="footer-text mb-2">Brīvības iela 100, Rīga</p>
-                        <p class="footer-text mb-2">+371 2000 1234</p>
-                        <p class="footer-text mb-0">info@seekino.lv</p>
-                    </v-col>
-                </v-row>
-            </v-container>
-            <div class="footer-bottom w-100 py-3 px-4 text-center">Copyright &copy; 2026 SEEKINO. Visas tiesības aizsargātas.</div>
-        </v-footer>
-    </v-app>
+    </div>
 </template>
 
 <script setup>
@@ -263,6 +149,7 @@ const normalizeScreening = (screening) => {
     const rawDate = screening.screening_date || screening.date || ''
     const rawTime = screening.screening_time || screening.time || ''
     const priceValue = numericValue(screening.price ?? screening.cost)
+    const availableSeats = numericValue(screening.available_seats ?? screening.availableSeats)
     return {
         id: screening.id,
         movieTitle: screening.movie?.title || screening.movie?.name || 'Filmas nosaukums nav pieejams',
@@ -271,6 +158,7 @@ const normalizeScreening = (screening) => {
         time: formatTime(rawTime),
         priceValue,
         price: formatPrice(priceValue),
+        availableSeats,
         timestamp: screeningTimestamp(rawDate, rawTime),
     }
 }
@@ -351,7 +239,7 @@ onMounted(fetchScreenings)
 </script>
 
 <style scoped>
-.screenings-page { background: radial-gradient(circle at 20% 15%, #243558 0%, transparent 30%), radial-gradient(circle at 80% 10%, #531d2c 0%, transparent 35%), #0a0c12; color: #f4f6fb; }
+.screenings-page { color: #f4f6fb; }
 .sticky-app-bar { position: sticky !important; top: 0; z-index: 1100; }
 .app-bar-shell { border-bottom: 1px solid rgba(255, 255, 255, 0.12); background: rgba(11, 14, 22, 0.82) !important; backdrop-filter: blur(10px); }
 .app-bar-inner { min-height: 76px; }
@@ -382,7 +270,7 @@ onMounted(fetchScreenings)
 .screening-title { min-height: 3.2rem; font-size: 1.25rem; line-height: 1.3; color: #f4f6fb; }
 .screening-meta { color: #d7dff2; }
 .price-chip { color: #f4f6fb; border-color: rgba(255, 255, 255, 0.24); }
-.state-title { font-size: 1.15rem; font-weight: 700; }
+.state-title { color: #ffffff; font-size: 1.15rem; font-weight: 700; }
 .state-icon { width: 58px; height: 58px; margin-inline: auto; display: grid; place-items: center; border-radius: 16px; background: rgba(229, 9, 20, 0.14); color: #ff7a70; }
 .site-footer { background: rgba(8, 10, 16, 0.96); border-top: 1px solid rgba(255, 255, 255, 0.1); }
 .footer-text { color: #c2ccdf; }

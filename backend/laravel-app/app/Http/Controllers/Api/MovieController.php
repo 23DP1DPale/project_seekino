@@ -278,6 +278,7 @@ class MovieController extends Controller
     private function screeningResponse(Screening $screening, bool $includeMovie = true): array
     {
         $hall = $this->hallFor($screening);
+        $availableSeats = $hall ? $this->availableSeatsFor($screening, (int) $hall->seat_amount) : null;
 
         $response = [
             'id' => $screening->id,
@@ -285,6 +286,7 @@ class MovieController extends Controller
             'screening_time' => $screening->screening_time,
             'cost' => (float) $screening->cost,
             'price' => (float) $screening->cost,
+            'available_seats' => $availableSeats,
             'hall' => $hall ? [
                 'id' => $hall->id,
                 'name' => $hall->name,
@@ -299,6 +301,18 @@ class MovieController extends Controller
         }
 
         return $response;
+    }
+
+    private function availableSeatsFor(Screening $screening, int $seatAmount): int
+    {
+        $reservedSeats = DB::table('reservations_seats')
+            ->join('reservations', 'reservations_seats.reservation', '=', 'reservations.id')
+            ->where('reservations_seats.screening', $screening->id)
+            ->whereIn('reservations.payment_status', ['pending', 'paid'])
+            ->distinct('reservations_seats.seat')
+            ->count('reservations_seats.seat');
+
+        return max(0, $seatAmount - $reservedSeats);
     }
 
     private function nextScreening(EloquentCollection|Collection $screenings): ?array

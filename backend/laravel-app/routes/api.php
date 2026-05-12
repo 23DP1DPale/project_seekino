@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\AdminMovieController;
 use App\Http\Controllers\Api\AdminScreeningController;
+use App\Http\Controllers\Api\AdminUserController;
 use App\Http\Controllers\Api\MovieController;
 use App\Http\Controllers\Api\ReservationController;
 use Illuminate\Support\Facades\Route;
@@ -23,6 +24,9 @@ Route::post('/admin/screenings', [AdminScreeningController::class, 'store']);
 Route::put('/admin/screenings/{screening}', [AdminScreeningController::class, 'update']);
 Route::delete('/admin/screenings/{screening}', [AdminScreeningController::class, 'destroy']);
 Route::get('/admin/halls', [AdminScreeningController::class, 'halls']);
+Route::get('/admin/users', [AdminUserController::class, 'index']);
+Route::put('/admin/users/{user}', [AdminUserController::class, 'update']);
+Route::delete('/admin/users/{user}', [AdminUserController::class, 'destroy']);
 
 Route::get('/movies', [MovieController::class, 'index']);
 Route::get('/movies/{movie}/feedbacks', [MovieController::class, 'feedbacks']);

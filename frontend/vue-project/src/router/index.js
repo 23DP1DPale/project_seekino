@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import AdminMovies from '@/views/admin-movies.vue'
 import AdminScreenings from '@/views/admin-screenings.vue'
+import AdminUsers from '@/views/admin-users.vue'
 import Home from '../views/home.vue'
 import Filmas from '@/views/filmas.vue'
 import FilmasDetalizeti from '@/views/filmas-detalizeti.vue'
@@ -61,6 +62,11 @@ const routes = [
     path: '/admin/screenings',
     name: 'AdminScreenings',
     component: AdminScreenings,
+  },
+  {
+    path: '/admin/users',
+    name: 'AdminUsers',
+    component: AdminUsers,
   },
   {
     path: '/register',

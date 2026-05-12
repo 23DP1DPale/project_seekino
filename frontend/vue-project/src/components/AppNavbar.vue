@@ -130,6 +130,7 @@ const menuGroups = computed(() => {
             items: [
                 { title: 'Filmu pārvaldība', icon: 'mdi-movie-edit-outline', to: '/admin/movies' },
                 { title: 'Seansu pārvaldība', icon: 'mdi-calendar-edit-outline', to: '/admin/screenings' },
+                { title: 'Lietotāji', icon: 'mdi-account-group-outline', to: '/admin/users' },
             ],
         })
     }

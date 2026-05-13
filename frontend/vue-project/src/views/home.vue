@@ -93,8 +93,9 @@
                                     rounded="lg"
                                     class="text-none reserve-btn"
                                     append-icon="mdi-arrow-right"
+                                    :to="`/filmas/${movie.id}`"
                                 >
-                                    Rezervēt biļetes
+                                    Skatīt detaļas
                                 </v-btn>
                             </v-card-actions>
                         </v-card>
@@ -247,8 +248,18 @@ const priceLabel = (price) => price === null || price === undefined || price ===
     ? 'Cena nav pieejama'
     : `no ${Number(price).toFixed(2)} EUR`
 
+const numericValue = (value) => {
+    const number = Number(value)
+
+    return Number.isFinite(number) ? number : null
+}
+
 const normalizeMovie = (movie, index) => {
     const genre = movie.genre || movie.genres?.find((item) => item.primary)?.name || movie.genres?.[0]?.name
+    const hasFutureScreening = Boolean(movie.next_screening || movie.nextSession)
+    const price = hasFutureScreening
+        ? numericValue(movie.next_screening?.price ?? movie.lowest_price ?? movie.minPrice ?? movie.price)
+        : null
 
     return {
         id: movie.id ?? `${movie.title || 'movie'}-${index}`,
@@ -257,8 +268,8 @@ const normalizeMovie = (movie, index) => {
         duration: movie.duration ?? '-',
         genre: genre || 'Žanrs nav norādīts',
         rating: Number(movie.rating) || 0,
-        price: movie.price,
-        priceLabel: priceLabel(movie.price),
+        price,
+        priceLabel: priceLabel(price),
         poster: movie.image || movie.poster || defaultMoviePoster,
     }
 }

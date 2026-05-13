@@ -141,13 +141,14 @@
 
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
-import { RouterLink, useRoute } from 'vue-router'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useAuth } from '@/services/auth'
 
 const route = useRoute()
+const router = useRouter()
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'
 const drawer = ref(false)
-const { token, user, isAuthenticated, authLoading: navAuthLoading, logout } = useAuth()
+const { token, user, isAuthenticated, authLoading: navAuthLoading, logout, clearSession } = useAuth()
 const authDialog = ref(false)
 const authMode = ref('login')
 const authLoading = ref(false)
@@ -288,6 +289,15 @@ const submitReservation = async () => {
         return
     }
 
+    if (!isAuthenticated.value) {
+        router.push({
+            path: '/login',
+            query: { redirect: route.fullPath },
+        })
+
+        return
+    }
+
     reservationLoading.value = true
     reservationError.value = ''
     reservationSuccess.value = ''
@@ -308,6 +318,14 @@ const submitReservation = async () => {
         const data = await response.json().catch(() => ({}))
 
         if (!response.ok) {
+            if (response.status === 401) {
+                clearSession()
+                router.push({
+                    path: '/login',
+                    query: { redirect: route.fullPath },
+                })
+            }
+
             throw new Error(data.message || 'Rezervāciju neizdevās izveidot.')
         }
 

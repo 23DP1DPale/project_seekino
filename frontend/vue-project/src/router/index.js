@@ -11,6 +11,7 @@ import Kontakti from '@/views/kontakti.vue'
 import Login from '@/views/login.vue'
 import Profile from '@/views/profile.vue'
 import Register from '@/views/register.vue'
+import { useAuth } from '@/services/auth'
 
 const routes = [
   {
@@ -32,6 +33,7 @@ const routes = [
     path: '/reservation/:screeningId',
     name: 'Reservation',
     component: Reservation,
+    meta: { requiresAuth: true },
   },
   {
     path: '/seansi',
@@ -81,6 +83,19 @@ const router = createRouter({
   scrollBehavior() {
     return { top: 0 }
   },
+})
+
+router.beforeEach((to) => {
+  const { isAuthenticated } = useAuth()
+
+  if (!to.meta.requiresAuth || isAuthenticated.value) {
+    return true
+  }
+
+  return {
+    path: '/login',
+    query: { redirect: to.fullPath },
+  }
 })
 
 export default router

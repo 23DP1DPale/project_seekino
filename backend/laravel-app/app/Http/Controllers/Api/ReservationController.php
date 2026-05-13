@@ -106,6 +106,12 @@ class ReservationController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        $authenticatedUser = $this->authenticatedUser($request);
+
+        if (! $authenticatedUser) {
+            return $this->unauthenticatedResponse();
+        }
+
         $validator = Validator::make($request->all(), [
             'screening_id' => ['required', 'integer', 'exists:screenings,id'],
             'seat_ids' => ['required', 'array', 'min:1'],
@@ -133,11 +139,6 @@ class ReservationController extends Controller
             ->map(fn ($seatId): int => (int) $seatId)
             ->unique()
             ->values();
-        $authenticatedUser = $this->authenticatedUser($request);
-
-        if ($request->bearerToken() && ! $authenticatedUser) {
-            return $this->unauthenticatedResponse();
-        }
 
         try {
             $reservation = DB::transaction(function () use ($screeningId, $seatIds, $authenticatedUser): array {
@@ -181,13 +182,12 @@ class ReservationController extends Controller
                     ], 409));
                 }
 
-                $userId = $authenticatedUser?->id ?? DB::table('users')->orderBy('id')->value('id') ?? 1;
                 $now = now();
                 $reservationId = DB::table('reservations')->insertGetId([
                     'reservation_date' => $now,
                     'payment_status' => 'pending',
                     'expiration_date' => $now->copy()->addMinutes(15),
-                    'user' => $userId,
+                    'user' => $authenticatedUser->id,
                     'screening' => $screeningId,
                 ]);
 

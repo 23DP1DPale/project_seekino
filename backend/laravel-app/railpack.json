@@ -2,7 +2,8 @@
   "$schema": "https://schema.railpack.com",
   "provider": "php",
   "packages": {
-    "php": "8.3"
+    "php": "8.3",
+    "node": "22"
   },
   "buildAptPackages": [
     "autoconf",
@@ -11,11 +12,17 @@
     "curl",
     "git",
     "libcurl4-openssl-dev",
+    "libfreetype6-dev",
+    "libgd-dev",
+    "libicu-dev",
+    "libjpeg-dev",
     "libonig-dev",
+    "libpng-dev",
     "libpq-dev",
     "libreadline-dev",
     "libsqlite3-dev",
     "libssl-dev",
+    "libwebp-dev",
     "libxml2-dev",
     "libzip-dev",
     "pkg-config",
@@ -27,7 +34,12 @@
     "aptPackages": [
       "curl",
       "git",
+      "libfreetype6",
+      "libgd3",
+      "libjpeg62-turbo",
+      "libpng16-16",
       "libpq5",
+      "libwebp7",
       "unzip"
     ]
   }

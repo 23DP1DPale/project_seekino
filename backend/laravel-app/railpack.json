@@ -20,7 +20,14 @@
     "pkg-config",
     "re2c",
     "unzip",
-    "zlib1g-dev"
+    "zlib1g-dev",
+    "libgd-dev",
+    "libpng-dev",
+    "libjpeg-dev",
+    "libwebp-dev",
+    "libavif-dev",
+    "libfreetype6-dev",
+    "libxpm-dev"
   ],
   "deploy": {
     "aptPackages": [

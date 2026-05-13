@@ -12,6 +12,7 @@
     "git",
     "libcurl4-openssl-dev",
     "libonig-dev",
+    "libpq-dev",
     "libreadline-dev",
     "libsqlite3-dev",
     "libssl-dev",
@@ -20,19 +21,13 @@
     "pkg-config",
     "re2c",
     "unzip",
-    "zlib1g-dev",
-    "libgd-dev",
-    "libpng-dev",
-    "libjpeg-dev",
-    "libwebp-dev",
-    "libavif-dev",
-    "libfreetype6-dev",
-    "libxpm-dev"
+    "zlib1g-dev"
   ],
   "deploy": {
     "aptPackages": [
       "curl",
       "git",
+      "libpq5",
       "unzip"
     ]
   }

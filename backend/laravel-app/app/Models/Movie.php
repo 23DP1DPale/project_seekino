@@ -15,6 +15,7 @@ class Movie extends Model
         'length',
         'description',
         'director',
+        'image',
         'age_restriction',
     ];
 

@@ -478,7 +478,7 @@ const normalizeMovie = (payload) => {
         rating: Number(payload.rating ?? payload.average_rating) || 0,
         price: lowestScreeningPrice === null ? null : formatPrice(lowestScreeningPrice),
         priceLabel: lowestScreeningPrice === null ? 'Cena nav pieejama' : `no ${formatPrice(lowestScreeningPrice)}`,
-        poster: payload.poster || payload.image || '',
+        poster: payload.image || payload.poster || '',
         nextScreeningLabel: formatDateTime(nextScreening),
         screenings,
     }

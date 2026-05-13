@@ -349,7 +349,7 @@ const normalizeMovie = (movie) => {
         rating,
         price,
         priceLabel: priceLabel(price),
-        poster: movie.poster || movie.image || defaultMoviePoster,
+        poster: movie.image || movie.poster || defaultMoviePoster,
         nextSession: formatDateTime(nextSession),
         formats: movie.formats || [],
         description: movie.description,

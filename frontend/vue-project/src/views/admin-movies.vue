@@ -91,6 +91,14 @@
                     class="mb-3"
                     :disabled="formLoading"
                   />
+                  <v-text-field
+                    v-model="form.image"
+                    label="Attēla URL"
+                    variant="outlined"
+                    prepend-inner-icon="mdi-image-outline"
+                    class="mb-3"
+                    :disabled="formLoading"
+                  />
                   <v-select
                     v-model="form.age_restriction"
                     label="Vecuma ierobežojums"
@@ -230,6 +238,7 @@ function emptyForm() {
     length: null,
     description: '',
     director: '',
+    image: '',
     age_restriction: 'Bez ierobežojuma',
     genre_ids: [],
   }
@@ -342,6 +351,7 @@ const startEdit = (movie) => {
     length: movie.length || null,
     description: movie.description || '',
     director: movie.director || '',
+    image: movie.image || '',
     age_restriction: movie.age_restriction || 'Bez ierobežojuma',
     genre_ids: movie.genre_ids || [],
   }

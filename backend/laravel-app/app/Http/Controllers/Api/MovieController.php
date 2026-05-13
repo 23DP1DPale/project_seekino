@@ -204,7 +204,8 @@ class MovieController extends Controller
                 'id' => $movie->id,
                 'name' => $movie->name,
                 'title' => $movie->name,
-                'poster' => $this->posterFor($movie->id),
+                'image' => $this->storedImageFor($movie),
+                'poster' => $this->imageFor($movie),
             ] : null,
             'hall' => $hall ? [
                 'id' => $hall->id,
@@ -226,7 +227,8 @@ class MovieController extends Controller
             ])
             ->values();
         $primaryGenre = $genres->firstWhere('primary', true) ?? $genres->first();
-        $poster = $this->posterFor($movie->id);
+        $image = $this->storedImageFor($movie);
+        $poster = $this->imageFor($movie);
         $rating = $this->averageRating($movie);
         $price = $this->lowestPrice($movie);
 
@@ -250,7 +252,7 @@ class MovieController extends Controller
             'next_screening' => $nextScreening,
             'nextSession' => $this->nextSessionLabel($nextScreening),
             'hall' => $nextScreening['hall'] ?? null,
-            'image' => $poster,
+            'image' => $image,
             'poster' => $poster,
             'formats' => ['2D'],
         ];
@@ -504,5 +506,17 @@ class MovieController extends Controller
             5 => 'https://images.unsplash.com/photo-1478720568477-152d9b164e26?auto=format&fit=crop&w=1000&q=80',
             6 => 'https://images.unsplash.com/photo-1440404653325-ab127d49abc1?auto=format&fit=crop&w=1000&q=80',
         ][$movieId] ?? null;
+    }
+
+    private function storedImageFor(Movie $movie): ?string
+    {
+        $image = trim((string) $movie->image);
+
+        return $image !== '' ? $image : null;
+    }
+
+    private function imageFor(Movie $movie): ?string
+    {
+        return $this->storedImageFor($movie) ?? $this->posterFor($movie->id);
     }
 }

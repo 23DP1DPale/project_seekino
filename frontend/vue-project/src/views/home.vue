@@ -259,7 +259,7 @@ const normalizeMovie = (movie, index) => {
         rating: Number(movie.rating) || 0,
         price: movie.price,
         priceLabel: priceLabel(movie.price),
-        poster: movie.poster || movie.image || defaultMoviePoster,
+        poster: movie.image || movie.poster || defaultMoviePoster,
     }
 }
 

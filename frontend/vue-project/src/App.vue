@@ -8,6 +8,7 @@ const route = useRoute()
 const usesSharedLayout = computed(() => true)
 const footerWithoutTopGap = computed(() =>
   route.path === '/profile' ||
+  route.path === '/kontakti' ||
   String(route.path || '').startsWith('/reservation/') ||
   String(route.path || '').startsWith('/admin/')
 )

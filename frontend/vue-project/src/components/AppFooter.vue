@@ -3,7 +3,7 @@
         <v-container class="py-10">
             <v-row class="ga-0">
                 <v-col cols="12" md="4" class="pr-md-8">
-                    <v-img src="/img/logo_seekino.png" max-width="160" height="52" class="logo mb-3" />
+                    <v-img src="/img/logo_seekino.png" max-width="140" height="46" class="logo mb-3" />
                     <p class="footer-text mb-4">
                         Mūsdienīga kino biļešu platforma ar ērtu rezervāciju, seansu pārskatu un filmu atlasi pēc
                         tavām vēlmēm.
@@ -34,6 +34,7 @@
                             :to="link.to || undefined"
                             :title="link.title"
                             class="px-0"
+                            @click="link.action?.()"
                         />
                     </v-list>
                 </v-col>
@@ -52,6 +53,10 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAuth } from '@/services/auth'
+
 defineProps({
     withoutTopGap: {
         type: Boolean,
@@ -59,18 +64,31 @@ defineProps({
     },
 })
 
+const router = useRouter()
+const { isAuthenticated, logout } = useAuth()
+
 const footerNavLinks = [
     { title: 'Sākums', to: '/' },
     { title: 'Filmas', to: '/filmas' },
     { title: 'Seansi', to: '/seansi' },
     { title: 'Kontakti', to: '/kontakti' },
 ]
-const footerUserLinks = [
-    { title: 'Mans profils', to: '/profile' },
-    { title: 'Atbalsts' },
-    { title: 'Privātuma politika' },
-]
+const footerUserLinks = computed(() => isAuthenticated.value
+    ? [
+        { title: 'Mans profils', to: '/profile' },
+        { title: 'Izrakstīties', action: handleLogout },
+    ]
+    : [
+        { title: 'Mans profils', to: '/profile' },
+        { title: 'Pieslēgties', to: '/login' },
+        { title: 'Reģistrēties', to: '/register' },
+    ])
 const socialIcons = ['mdi-facebook', 'mdi-instagram', 'mdi-youtube', 'mdi-twitter']
+
+async function handleLogout() {
+    await logout()
+    await router.push('/')
+}
 </script>
 
 <style scoped>

@@ -9,6 +9,7 @@ class ScreeningsSeeder extends Seeder
 {
     public function run(): void
     {
+        // Datumi tiek rēķināti no šodienas, lai demo seansi vienmēr būtu nākotnē.
         $screenings = [
             ['id' => 1, 'screening_date' => now()->addDays(1)->toDateString(), 'screening_time' => '18:00:00', 'cost' => '8.50', 'hall' => 1, 'movie' => 1],
             ['id' => 2, 'screening_date' => now()->addDays(1)->toDateString(), 'screening_time' => '20:30:00', 'cost' => '9.00', 'hall' => 2, 'movie' => 3],

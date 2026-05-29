@@ -9,6 +9,7 @@ class GenresSeeder extends Seeder
 {
     public function run(): void
     {
+        // Žanru ID tiek izmantoti movies_genres_usage tabulā.
         $genres = [
             [
                 'id' => 1,
@@ -42,6 +43,7 @@ class GenresSeeder extends Seeder
             ],
         ];
 
+        // Pēc ID atjauno esošu žanru vai izveido to, ja tas vēl neeksistē.
         foreach ($genres as $genre) {
             DB::table('genres')->updateOrInsert(['id' => $genre['id']], $genre);
         }

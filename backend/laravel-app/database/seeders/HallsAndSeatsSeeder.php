@@ -18,6 +18,7 @@ class HallsAndSeatsSeeder extends Seeder
             DB::table('halls')->updateOrInsert(['id' => $hall['id']], $hall);
         }
 
+        // Sēdvietu ID turpinās starp zālēm, lai katrai sēdvietai būtu unikāls primārais ID.
         $seatId = 1;
 
         $this->seedSeats($seatId, hall: 1, rows: 5, seatsPerRow: 8);
@@ -26,6 +27,7 @@ class HallsAndSeatsSeeder extends Seeder
 
     private function seedSeats(int &$seatId, int $hall, int $rows, int $seatsPerRow): void
     {
+        // Ģenerē sēdvietu režģi pēc rindu un vietu skaita konkrētajai zālei.
         for ($row = 1; $row <= $rows; $row++) {
             for ($seat = 1; $seat <= $seatsPerRow; $seat++) {
                 DB::table('seats')->updateOrInsert(

@@ -9,6 +9,7 @@ class FeedbacksSeeder extends Seeder
 {
     public function run(): void
     {
+        // Atsauksmes izmanto iepriekš izveidoto filmu un lietotāju ID.
         $feedbacks = [
             [
                 'id' => 1,
@@ -44,6 +45,7 @@ class FeedbacksSeeder extends Seeder
             ],
         ];
 
+        // updateOrInsert ļauj palaist seederi vairākas reizes bez dublikātiem.
         foreach ($feedbacks as $feedback) {
             DB::table('feedbacks')->updateOrInsert(['id' => $feedback['id']], $feedback);
         }

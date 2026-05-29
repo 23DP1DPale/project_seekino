@@ -16,8 +16,11 @@ const footerWithoutTopGap = computed(() =>
 
 <template>
   <v-app class="seekino-app public-app-shell">
+    <a class="skip-link" href="#main-content">Pāriet uz saturu</a>
     <AppNavbar v-if="usesSharedLayout" />
-    <router-view />
+    <div id="main-content" tabindex="-1">
+      <router-view />
+    </div>
     <AppFooter v-if="usesSharedLayout" :without-top-gap="footerWithoutTopGap" />
   </v-app>
 </template>
@@ -32,5 +35,26 @@ const footerWithoutTopGap = computed(() =>
 
 .public-app-shell :deep(.v-application__wrap) {
   background: transparent;
+}
+
+.skip-link {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 10000;
+  transform: translateY(-160%);
+  border-radius: 8px;
+  background: #ffffff;
+  color: #111111;
+  font-weight: 700;
+  padding: 10px 14px;
+  text-decoration: none;
+  transition: transform 0.15s ease;
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+  outline: 3px solid #e50914;
+  outline-offset: 3px;
 }
 </style>

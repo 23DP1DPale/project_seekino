@@ -10,6 +10,7 @@ class UsersSeeder extends Seeder
 {
     public function run(): void
     {
+        // Demo lietotājs parastajām rezervācijas un profila darbībām.
         DB::table('users')->updateOrInsert(
             ['id' => 1],
             [
@@ -20,6 +21,7 @@ class UsersSeeder extends Seeder
             ],
         );
 
+        // Demo administrators filmu, seansu un lietotāju pārvaldības skatam.
         DB::table('users')->updateOrInsert(
             ['id' => 2],
             [

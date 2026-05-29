@@ -2,10 +2,12 @@ import { computed, ref } from 'vue'
 
 export const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'
 
+// Sesija tiek glabāta localStorage, lai lietotājs paliktu pieslēdzies pēc lapas pārlādes.
 const token = ref(localStorage.getItem('seekino_token') || '')
 const user = ref(readStoredUser())
 const authLoading = ref(false)
 
+// Ja localStorage dati ir bojāti, tos notīra un sāk ar tukšu sesiju.
 function readStoredUser() {
   try {
     const storedUser = localStorage.getItem('seekino_user')
@@ -37,6 +39,7 @@ function updateStoredUser(nextUser) {
   localStorage.setItem('seekino_user', JSON.stringify(nextUser))
 }
 
+// Kopīgs API pieprasījumu palīgs, kas normalizē JSON atbildes un kļūdu ziņas.
 async function requestJson(path, options = {}) {
   const response = await fetch(`${apiBaseUrl}${path}`, {
     headers: {
@@ -67,6 +70,7 @@ function errorMessage(payload) {
   return payload?.ziņa || payload?.message || ''
 }
 
+// Pārbauda esošo tokenu pret backend un atjauno saglabāto lietotāja informāciju.
 async function fetchMe() {
   if (!token.value) {
     return null

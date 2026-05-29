@@ -21,6 +21,7 @@ class ReservationController extends Controller
             return $this->unauthenticatedResponse();
         }
 
+        // Vienā vaicājumā savāc rezervāciju kopā ar seansu, filmu, zāli un sēdvietām.
         $rows = DB::table('reservations')
             ->join('screenings', 'reservations.screening', '=', 'screenings.id')
             ->join('movies', 'screenings.movie', '=', 'movies.id')
@@ -54,6 +55,7 @@ class ReservationController extends Controller
             ]);
         }
 
+        // Vienai rezervācijai var būt vairākas sēdvietas, tāpēc rindas jāsagrupē pēc rezervācijas ID.
         $reservations = $rows
             ->groupBy('reservation_id')
             ->map(fn ($reservationRows): array => $this->reservationResponse($reservationRows))
@@ -141,6 +143,7 @@ class ReservationController extends Controller
             ->values();
 
         try {
+            // Rezervācijas izveide notiek transakcijā, lai sēdvietas nevarētu daļēji rezervēt.
             $reservation = DB::transaction(function () use ($screeningId, $seatIds, $authenticatedUser): array {
                 $screening = DB::table('screenings')->where('id', $screeningId)->first();
 
@@ -166,6 +169,7 @@ class ReservationController extends Controller
                     ], 422));
                 }
 
+                // lockForUpdate pasargā no situācijas, kur divi lietotāji vienlaikus paņem vienu un to pašu vietu.
                 $reservedSeatIds = DB::table('reservations_seats')
                     ->join('reservations', 'reservations_seats.reservation', '=', 'reservations.id')
                     ->where('reservations_seats.screening', $screeningId)
@@ -186,6 +190,7 @@ class ReservationController extends Controller
                 $reservationId = DB::table('reservations')->insertGetId([
                     'reservation_date' => $now,
                     'payment_status' => 'pending',
+                    // Pending rezervācijai dod īsu derīguma termiņu apmaksai vai atbrīvošanai.
                     'expiration_date' => $now->copy()->addMinutes(15),
                     'user' => $authenticatedUser->id,
                     'screening' => $screeningId,
@@ -237,6 +242,7 @@ class ReservationController extends Controller
             return null;
         }
 
+        // Klients sūta plain tokenu, bet datubāzē salīdzinām tikai tā SHA-256 hash.
         $apiToken = ApiToken::query()
             ->with('user')
             ->where('token_hash', hash('sha256', $token))
@@ -281,6 +287,7 @@ class ReservationController extends Controller
         return $rows->isEmpty() ? null : $this->reservationResponse($rows);
     }
 
+    // Frontend saņem vienotu rezervācijas formātu neatkarīgi no tā, cik sēdvietu ir rezervācijā.
     private function reservationResponse($reservationRows): array
     {
         $first = $reservationRows->first();

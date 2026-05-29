@@ -1,6 +1,7 @@
 import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router'
+import { registerServiceWorker } from './registerServiceWorker'
 
 // Vuetify
 import 'vuetify/styles'
@@ -18,3 +19,5 @@ createApp(App)
   .use(router)
   .use(vuetify)
   .mount('#app')
+
+registerServiceWorker()

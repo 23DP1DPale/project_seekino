@@ -127,6 +127,7 @@ class AdminMovieController extends Controller
             return $admin;
         }
 
+        // Dzēšot filmu, vispirms notīrām ar to saistītos seansus, rezervācijas un biļetes.
         DB::transaction(function () use ($movie): void {
             $screeningIds = DB::table('screenings')
                 ->where('movie', $movie->id)
@@ -285,6 +286,7 @@ class AdminMovieController extends Controller
      */
     private function syncGenres(Movie $movie, array $genreIds): void
     {
+        // Žanru sasaisti pārrakstām pilnībā, lai update rezultāts precīzi sakristu ar formā izvēlēto.
         DB::table('movies_genres_usage')
             ->where('movie', $movie->id)
             ->delete();

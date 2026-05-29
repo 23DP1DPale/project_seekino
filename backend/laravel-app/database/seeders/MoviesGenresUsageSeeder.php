@@ -9,6 +9,7 @@ class MoviesGenresUsageSeeder extends Seeder
 {
     public function run(): void
     {
+        // Saista filmas ar žanriem; primary_genre norāda galveno žanru filmas attēlošanai.
         $usages = [
             ['id' => 1, 'movie' => 1, 'genre' => 5, 'primary_genre' => true],
             ['id' => 2, 'movie' => 1, 'genre' => 6, 'primary_genre' => false],

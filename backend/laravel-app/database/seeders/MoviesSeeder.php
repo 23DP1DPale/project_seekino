@@ -9,6 +9,7 @@ class MoviesSeeder extends Seeder
 {
     public function run(): void
     {
+        // Filmu ID tiek izmantoti seansos, žanru sasaistēs un atsauksmēs.
         $movies = [
             [
                 'id' => 1,

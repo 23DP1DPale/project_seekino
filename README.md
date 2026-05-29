@@ -20,6 +20,7 @@
 - [Testa lietotāji](#testa-lietotāji)
 - [API maršruti](#api-maršruti)
 - [Build un testi](#build-un-testi)
+- [Prasību atbilstība](#prasību-atbilstība)
 
 ---
 
@@ -253,6 +254,12 @@ npm run preview
 cd backend/laravel-app
 php artisan test
 ```
+
+---
+
+## Prasību atbilstība
+
+Projekta PWA, OWASP, WCAG un funkcionālo prasību kopsavilkums pieejams [docs/requirements-compliance.md](docs/requirements-compliance.md).
 
 ---
 

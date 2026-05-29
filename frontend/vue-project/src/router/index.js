@@ -85,6 +85,7 @@ const router = createRouter({
   },
 })
 
+// Aizsargā maršrutus ar meta.requiresAuth un pēc pieslēgšanās atgriež lietotāju sākotnējā lapā.
 router.beforeEach((to) => {
   const { isAuthenticated } = useAuth()
 

@@ -240,21 +240,8 @@ onMounted(fetchScreenings)
 
 <style scoped>
 .screenings-page { color: #f4f6fb; }
-.sticky-app-bar { position: sticky !important; top: 0; z-index: 1100; }
-.app-bar-shell { border-bottom: 1px solid rgba(255, 255, 255, 0.12); background: rgba(11, 14, 22, 0.82) !important; backdrop-filter: blur(10px); }
-.app-bar-inner { min-height: 76px; }
 .main-content { padding-top: 0; }
-.logo { filter: invert(1); }
-.brand-link { display: inline-flex; align-items: center; text-decoration: none; width: 160px; min-width: 160px; }
-.brand-logo { width: 160px; flex: 0 0 160px; }
-.nav-btn { color: #f4f6fb; }
-.nav-link-btn { color: #d7dff2; border: 1px solid transparent; }
-.nav-pages { display: none; }
-@media (min-width: 700px) { .nav-pages { display: flex; } }
-.login-btn { margin-left: 5px; background: linear-gradient(135deg, #ff5a44, #e50914); color: #ffffff !important; font-weight: 700; border: 1px solid rgba(255, 255, 255, 0.24); }
-.auth-dialog-card { border: 1px solid rgba(255, 255, 255, 0.14); background: linear-gradient(165deg, #121724, #10131c); color: #edf2ff; }
-.auth-dialog-card :deep(.v-field), .auth-dialog-card :deep(.v-label), .auth-dialog-card :deep(.v-field__input), .auth-dialog-card :deep(.v-icon), .auth-dialog-card :deep(.v-card-title), .auth-dialog-card :deep(.v-card-text), .auth-dialog-card :deep(.v-btn), .auth-dialog-card :deep(.v-alert__content), .auth-dialog-card :deep(.text-caption) { color: #edf2ff; }
-.auth-switch-link { color: #ff5a44; text-decoration: none; font-weight: 600; }
+
 .hero-section { background: radial-gradient(circle at 12% 18%, rgba(68, 111, 203, 0.34), transparent 42%), radial-gradient(circle at 82% 14%, rgba(220, 54, 88, 0.3), transparent 38%), linear-gradient(130deg, #0f1628 0%, #17172a 45%, #2a141d 100%); }
 .hero-panel, .filter-card, .screening-card, .state-card { border: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(180deg, #141926, #0f131d); }
 .hero-panel { border-radius: 24px; }
@@ -272,11 +259,4 @@ onMounted(fetchScreenings)
 .price-chip { color: #f4f6fb; border-color: rgba(255, 255, 255, 0.24); }
 .state-title { color: #ffffff; font-size: 1.15rem; font-weight: 700; }
 .state-icon { width: 58px; height: 58px; margin-inline: auto; display: grid; place-items: center; border-radius: 16px; background: rgba(229, 9, 20, 0.14); color: #ff7a70; }
-.site-footer { background: rgba(8, 10, 16, 0.96); border-top: 1px solid rgba(255, 255, 255, 0.1); }
-.footer-text { color: #c2ccdf; }
-.footer-heading { color: #ffffff; }
-.footer-list { background: transparent; }
-.footer-list :deep(.v-list-item-title) { color: #d7dff2; }
-.footer-social-btn { color: #d7dff2; border-color: rgba(255, 255, 255, 0.18); }
-.footer-bottom { color: #aeb8cc; border-top: 1px solid rgba(255, 255, 255, 0.08); background: rgba(255, 255, 255, 0.02); }
 </style>

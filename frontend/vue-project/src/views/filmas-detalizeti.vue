@@ -719,22 +719,6 @@ const submitAuth = async () => {
     animation: subtle-fade-in 0.42s ease both;
 }
 
-.sticky-app-bar {
-    position: sticky !important;
-    top: 0;
-    z-index: 1100;
-}
-
-.app-bar-shell {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-    background: rgba(11, 14, 22, 0.82) !important;
-    backdrop-filter: blur(10px);
-}
-
-.app-bar-inner {
-    min-height: 76px;
-}
-
 .main-content {
     position: relative;
     padding-top: 0;
@@ -760,114 +744,6 @@ const submitAuth = async () => {
         );
     opacity: 0.35;
     pointer-events: none;
-}
-
-.logo {
-    filter: invert(1);
-}
-
-.brand-link {
-    display: inline-flex;
-    align-items: center;
-    text-decoration: none;
-    width: 160px;
-    min-width: 160px;
-    transition: opacity 0.16s ease, transform 0.16s ease;
-}
-
-.brand-link:hover {
-    opacity: 0.92;
-    transform: translateY(-1px);
-}
-
-.brand-logo {
-    width: 160px;
-    flex: 0 0 160px;
-}
-
-.nav-btn {
-    color: #f4f6fb;
-}
-
-.nav-link-btn,
-.back-link {
-    color: #d7dff2;
-    border: 1px solid transparent;
-    transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease,
-        box-shadow 0.2s ease;
-}
-
-.nav-link-btn:hover,
-.back-link:hover {
-    color: #ffffff;
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(255, 255, 255, 0.16);
-    transform: scale(1.03);
-    box-shadow: 0 0 18px rgba(76, 114, 255, 0.12);
-}
-
-.login-btn {
-    margin-left: 5px;
-    background: linear-gradient(135deg, #ff5a44, #e50914);
-    color: #ffffff !important;
-    font-weight: 700;
-    letter-spacing: 0.01em;
-    box-shadow: 0 5px 26px rgba(229, 9, 20, 0.38);
-    border: 1px solid rgba(255, 255, 255, 0.24);
-    transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
-}
-
-.login-btn :deep(.v-btn__content),
-.login-btn :deep(.v-icon) {
-    color: #ffffff !important;
-}
-
-.login-btn:hover {
-    transform: scale(1.03);
-    box-shadow: 0 8px 30px rgba(229, 9, 20, 0.5), 0 0 24px rgba(108, 132, 255, 0.14);
-    filter: brightness(1.07);
-}
-
-.nav-pages {
-    display: none;
-}
-
-@media (min-width: 700px) {
-    .nav-pages {
-        display: flex;
-    }
-}
-
-.auth-dialog-card {
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    background: linear-gradient(165deg, #121724, #10131c);
-    color: #edf2ff;
-}
-
-.auth-dialog-card :deep(.v-field),
-.auth-dialog-card :deep(.v-label),
-.auth-dialog-card :deep(.v-field__input),
-.auth-dialog-card :deep(.v-icon),
-.auth-dialog-card :deep(.v-card-title),
-.auth-dialog-card :deep(.v-card-text),
-.auth-dialog-card :deep(.v-btn),
-.auth-dialog-card :deep(.v-alert__content),
-.auth-dialog-card :deep(.text-caption) {
-    color: #edf2ff;
-}
-
-.auth-dialog-card :deep(.v-label.v-field-label) {
-    opacity: 0.85;
-}
-
-.auth-switch-link {
-    color: #ff5a44;
-    text-decoration: none;
-    font-weight: 600;
-}
-
-.auth-switch-link:hover {
-    text-decoration: underline;
 }
 
 .auth-switch-enter-active,
@@ -1104,133 +980,6 @@ const submitAuth = async () => {
     color: #d6def0;
 }
 
-.drawer-list :deep(.v-list-item-title) {
-    color: #f4f6fb;
-}
-
-.app-drawer {
-    position: relative;
-    border-right: 1px solid rgba(255, 255, 255, 0.12);
-    box-shadow: 18px 0 42px rgba(0, 0, 0, 0.36);
-}
-
-.drawer-header {
-    min-height: 72px;
-    background: rgba(255, 255, 255, 0.02);
-}
-
-.drawer-group-label {
-    min-height: 28px;
-    color: #8994ac;
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-}
-
-.drawer-group-divider {
-    border-color: rgba(255, 255, 255, 0.08);
-}
-
-.drawer-list :deep(.v-list-item) {
-    min-height: 44px;
-    margin-bottom: 6px;
-    color: #d7dff2;
-    border: 1px solid transparent;
-    transition: background-color 0.18s ease, border-color 0.18s ease, transform 0.18s ease, color 0.18s ease;
-}
-
-.drawer-list :deep(.v-list-item:hover) {
-    color: #ffffff;
-    background: rgba(255, 255, 255, 0.06);
-    border-color: rgba(255, 255, 255, 0.1);
-    transform: translateX(2px);
-}
-
-.drawer-list :deep(.v-list-item--active) {
-    background: rgba(229, 9, 20, 0.08);
-    border-color: transparent;
-    box-shadow: inset 3px 0 0 rgba(229, 9, 20, 0.72);
-}
-
-.drawer-list :deep(.v-list-item--active .v-list-item-title),
-.drawer-list :deep(.v-list-item--active .v-icon),
-.drawer-list :deep(.v-icon) {
-    color: #eef3ff;
-}
-
-.drawer-close-btn {
-    position: absolute;
-    top: 14px;
-    right: 14px;
-    color: #f4f6fb;
-    background: transparent;
-    border: 0;
-    opacity: 0.72;
-    transition: background-color 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
-}
-
-.drawer-close-btn:hover {
-    background: rgba(255, 255, 255, 0.05);
-    opacity: 1;
-    transform: scale(1.02);
-}
-
-.site-footer {
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    margin-top: 64px;
-    border-top: 1px solid rgba(255, 255, 255, 0.12);
-    background:
-        linear-gradient(180deg, rgba(14, 16, 24, 0.95), rgba(9, 11, 16, 1)),
-        radial-gradient(circle at 15% 0%, rgba(51, 76, 126, 0.2), transparent 40%);
-}
-
-.footer-text {
-    color: #c5cddd;
-    line-height: 1.55;
-    font-size: 0.92rem;
-}
-
-.footer-heading {
-    font-size: 0.95rem;
-    color: #ffffff;
-}
-
-.footer-list {
-    background: transparent;
-}
-
-.footer-list :deep(.v-list-item-title) {
-    color: #d4ddf1;
-    font-size: 0.9rem;
-}
-
-.footer-list :deep(.v-list-item:hover .v-list-item-title) {
-    color: #ffffff;
-}
-
-.footer-social-btn {
-    border-color: rgba(255, 255, 255, 0.24);
-    color: #e7eeff;
-    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-}
-
-.footer-social-btn:hover {
-    transform: scale(1.03);
-    box-shadow: 0 0 18px rgba(76, 114, 255, 0.12);
-    border-color: rgba(255, 255, 255, 0.34);
-}
-
-.footer-bottom {
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-    background: rgba(6, 8, 12, 0.7);
-    color: #9ea8bf;
-    font-size: 0.82rem;
-    text-align: center;
-}
-
 .empty-state-icon {
     display: inline-flex;
     align-items: center;
@@ -1270,7 +1019,7 @@ const submitAuth = async () => {
 }
 
 @media (max-width: 600px) {
-    .detail-title {
+.detail-title {
         max-width: 100%;
     }
 }

@@ -526,60 +526,12 @@ onMounted(async () => {
   color: #f4f6fb;
 }
 
-.sticky-app-bar {
-  position: sticky !important;
-  top: 0;
-  z-index: 1100;
-}
-
-.app-bar-shell {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(11, 14, 22, 0.82) !important;
-  backdrop-filter: blur(10px);
-}
-
-.app-bar-inner {
-  min-height: 76px;
-}
-
 .main-content {
   background:
     radial-gradient(circle at 12% 18%, rgba(68, 111, 203, 0.34), transparent 42%),
     radial-gradient(circle at 82% 14%, rgba(220, 54, 88, 0.3), transparent 38%),
     radial-gradient(circle at 56% 86%, rgba(66, 141, 106, 0.22), transparent 36%),
     linear-gradient(130deg, #0f1628 0%, #17172a 45%, #2a141d 100%);
-}
-
-.nav-btn,
-.drawer-close-btn {
-  color: #f4f6fb;
-}
-
-.logo {
-  filter: invert(1);
-}
-
-.brand-link {
-  display: inline-flex;
-  align-items: center;
-  width: 160px;
-  min-width: 160px;
-  text-decoration: none;
-}
-
-.nav-pages {
-  display: flex;
-}
-
-.nav-link-btn {
-  color: #d7dff2;
-}
-
-.login-btn {
-  background: linear-gradient(135deg, #ff5a44, #e50914);
-  color: #ffffff !important;
-  font-weight: 700;
-  box-shadow: 0 8px 26px rgba(229, 9, 20, 0.36);
 }
 
 .user-chip,
@@ -710,38 +662,8 @@ onMounted(async () => {
   text-align: right;
 }
 
-.app-drawer :deep(.v-list),
-.app-drawer :deep(.v-list-subheader),
-.app-drawer :deep(.v-list-item) {
-  color: #edf2ff;
-}
-
-.drawer-group-label {
-  color: #8f9ab2;
-  font-size: 0.78rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-.drawer-list-item {
-  color: #edf2ff;
-}
-
-.drawer-group-divider {
-  opacity: 0.18;
-}
-
 @media (max-width: 720px) {
-  .nav-pages {
-    display: none;
-  }
-
-  .brand-link {
-    width: 132px;
-    min-width: 132px;
-  }
-
-  .detail-row {
+.detail-row {
     align-items: flex-start;
     flex-direction: column;
     gap: 4px;

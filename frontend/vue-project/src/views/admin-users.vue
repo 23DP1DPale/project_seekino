@@ -332,12 +332,8 @@ onMounted(ensureAdminAccess)
   box-shadow: 0 22px 58px rgba(0, 0, 0, 0.34);
 }
 
-.admin-card :deep(.v-field),
-.admin-card :deep(.v-label),
-.admin-card :deep(.v-field__input),
-.admin-card :deep(.v-icon),
-.admin-card :deep(.v-select__selection-text) {
-  color: #edf2ff;
+.admin-card :deep(:where(.v-field, .v-label, .v-field__input, .v-icon, .v-select__selection-text)) {
+  color: inherit;
 }
 
 .state-icon {

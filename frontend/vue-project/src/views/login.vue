@@ -106,46 +106,6 @@ const submit = async () => {
   color: #f4f6fb;
 }
 
-.sticky-app-bar {
-  position: sticky !important;
-  top: 0;
-  z-index: 1100;
-}
-
-.app-bar-shell {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(11, 14, 22, 0.86) !important;
-  backdrop-filter: blur(10px);
-}
-
-.app-bar-inner {
-  min-height: 76px;
-}
-
-.logo {
-  filter: invert(1);
-}
-
-.brand-link {
-  display: inline-flex;
-  align-items: center;
-  width: 160px;
-  min-width: 160px;
-  text-decoration: none;
-}
-
-.nav-link-btn {
-  color: #d7dff2;
-}
-
-.login-btn,
-.auth-submit {
-  background: linear-gradient(135deg, #ff5a44, #e50914);
-  color: #ffffff !important;
-  font-weight: 700;
-  box-shadow: 0 8px 26px rgba(229, 9, 20, 0.36);
-}
-
 .auth-main {
   min-height: calc(100vh - 76px);
 }

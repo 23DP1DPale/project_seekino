@@ -496,22 +496,6 @@ onMounted(ensureAdminAccess)
   color: #f4f6fb;
 }
 
-.sticky-app-bar {
-  position: sticky !important;
-  top: 0;
-  z-index: 1100;
-}
-
-.app-bar-shell {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(11, 14, 22, 0.82) !important;
-  backdrop-filter: blur(10px);
-}
-
-.app-bar-inner {
-  min-height: 76px;
-}
-
 .main-content {
   min-height: 100vh;
   background:
@@ -519,26 +503,6 @@ onMounted(ensureAdminAccess)
     radial-gradient(circle at 82% 14%, rgba(220, 54, 88, 0.3), transparent 38%),
     radial-gradient(circle at 56% 86%, rgba(66, 141, 106, 0.22), transparent 36%),
     linear-gradient(130deg, #0f1628 0%, #17172a 45%, #2a141d 100%);
-}
-
-.logo {
-  filter: invert(1);
-}
-
-.brand-link {
-  display: inline-flex;
-  align-items: center;
-  width: 160px;
-  min-width: 160px;
-  text-decoration: none;
-}
-
-.nav-pages {
-  display: flex;
-}
-
-.nav-link-btn {
-  color: #d7dff2;
 }
 
 .state-card,
@@ -551,12 +515,8 @@ onMounted(ensureAdminAccess)
   box-shadow: 0 22px 58px rgba(0, 0, 0, 0.34);
 }
 
-.admin-card :deep(.v-field),
-.admin-card :deep(.v-label),
-.admin-card :deep(.v-field__input),
-.admin-card :deep(.v-icon),
-.admin-card :deep(.v-counter) {
-  color: #edf2ff;
+.admin-card :deep(:where(.v-field, .v-label, .v-field__input, .v-icon, .v-counter)) {
+  color: inherit;
 }
 
 .date-field {
@@ -679,16 +639,7 @@ onMounted(ensureAdminAccess)
 }
 
 @media (max-width: 720px) {
-  .nav-pages {
-    display: none;
-  }
-
-  .brand-link {
-    width: 132px;
-    min-width: 132px;
-  }
-
-  .screening-row {
+.screening-row {
     align-items: flex-start;
     flex-direction: column;
   }

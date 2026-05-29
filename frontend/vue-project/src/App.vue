@@ -132,7 +132,7 @@ const mobileNavItems = computed(() => [
 }
 
 @media (max-width: 699px) {
-  .main-content-shell {
+  .public-app-shell :deep(.v-application__wrap) {
     padding-bottom: calc(70px + env(safe-area-inset-bottom));
   }
 }

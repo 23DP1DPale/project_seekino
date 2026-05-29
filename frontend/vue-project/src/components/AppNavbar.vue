@@ -16,36 +16,48 @@
 
             <v-spacer />
 
-            <div class="ga-2 mr-2 nav-pages">
+            <div class="ga-2 mr-2 nav-pages desktop-nav">
                 <v-btn variant="text" class="text-none nav-link-btn" to="/filmas">Filmas</v-btn>
                 <v-btn variant="text" class="text-none nav-link-btn" to="/seansi">Seansi</v-btn>
             </div>
 
-            <template v-if="isAuthenticated">
-                <v-chip class="user-chip mr-2" prepend-icon="mdi-account-circle-outline" to="/profile" link>
-                    {{ user?.nickname }}
-                </v-chip>
-                <v-btn
-                    rounded="xl"
-                    class="text-none login-btn"
-                    prepend-icon="mdi-logout"
-                    :loading="navAuthLoading"
-                    @click="handleLogout"
-                >
-                    Izrakstīties
-                </v-btn>
-            </template>
-            <template v-else>
-                <v-btn variant="text" class="text-none nav-link-btn" to="/register">Reģistrēties</v-btn>
-                <v-btn
-                    rounded="xl"
-                    class="text-none login-btn"
-                    prepend-icon="mdi-account-circle-outline"
-                    to="/login"
-                >
-                    Pieslēgties
-                </v-btn>
-            </template>
+            <v-btn
+                v-if="isAuthenticated"
+                icon="mdi-logout"
+                variant="text"
+                class="mobile-logout-btn"
+                aria-label="Izrakstīties"
+                :loading="navAuthLoading"
+                @click="handleLogout"
+            />
+
+            <div class="desktop-actions">
+                <template v-if="isAuthenticated">
+                    <v-chip class="user-chip mr-2" prepend-icon="mdi-account-circle-outline" to="/profile" link>
+                        {{ user?.nickname }}
+                    </v-chip>
+                    <v-btn
+                        rounded="xl"
+                        class="text-none login-btn"
+                        prepend-icon="mdi-logout"
+                        :loading="navAuthLoading"
+                        @click="handleLogout"
+                    >
+                        Izrakstīties
+                    </v-btn>
+                </template>
+                <template v-else>
+                    <v-btn variant="text" class="text-none nav-link-btn" to="/register">Reģistrēties</v-btn>
+                    <v-btn
+                        rounded="xl"
+                        class="text-none login-btn"
+                        prepend-icon="mdi-account-circle-outline"
+                        to="/login"
+                    >
+                        Pieslēgties
+                    </v-btn>
+                </template>
+            </div>
         </v-container>
     </v-app-bar>
 
@@ -84,6 +96,21 @@
                 <v-divider v-if="!group.isLast" class="drawer-group-divider my-4" />
             </template>
         </v-list>
+
+        <template v-if="isAuthenticated" #append>
+            <div class="drawer-actions pa-3">
+                <v-btn
+                    block
+                    rounded="lg"
+                    class="text-none login-btn"
+                    prepend-icon="mdi-logout"
+                    :loading="navAuthLoading"
+                    @click="handleLogout"
+                >
+                    Izrakstīties
+                </v-btn>
+            </div>
+        </template>
     </v-navigation-drawer>
 </template>
 
@@ -171,9 +198,11 @@ const handleLogout = async () => {
 .login-btn { margin-left: 5px; background: linear-gradient(135deg, #ff5a44, #e50914); color: #ffffff !important; font-weight: 700; letter-spacing: 0.01em; border: 1px solid rgba(255, 255, 255, 0.24); box-shadow: 0 5px 26px rgba(229, 9, 20, 0.38); transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease; }
 .login-btn :deep(.v-btn__content), .login-btn :deep(.v-icon) { color: #ffffff !important; }
 .login-btn:hover { transform: scale(1.03); box-shadow: 0 8px 30px rgba(229, 9, 20, 0.5), 0 0 24px rgba(108, 132, 255, 0.14); filter: brightness(1.07); }
-.nav-pages { display: none; }
+.nav-pages,
+.desktop-actions { display: none; }
+.mobile-logout-btn { color: #f4f6fb; }
 .user-chip { color: #f4f6fb; border: 1px solid rgba(255, 255, 255, 0.16); background: rgba(255, 255, 255, 0.08); }
-.app-drawer { border-right: 1px solid rgba(255, 255, 255, 0.12); }
+.app-drawer { width: min(320px, 92vw) !important; max-width: 92vw; border-right: 1px solid rgba(255, 255, 255, 0.12); }
 .app-drawer :deep(.v-navigation-drawer__content) {
     overflow-x: hidden;
     overflow-y: auto;
@@ -198,9 +227,18 @@ const handleLogout = async () => {
 .app-drawer :deep(.v-navigation-drawer__content::-webkit-scrollbar-thumb:hover) {
     background: rgba(214, 222, 240, 0.62);
 }
+.drawer-actions .login-btn { margin-left: 0; }
 .drawer-close-btn,
 .drawer-list-item,
 .drawer-group-label { color: #f4f6fb; }
 .drawer-group-divider { border-color: rgba(255, 255, 255, 0.12); }
-@media (min-width: 700px) { .nav-pages { display: flex; } }
+@media (min-width: 700px) {
+    .nav-pages { display: flex; }
+    .desktop-actions { display: flex; align-items: center; }
+    .mobile-logout-btn { display: none; }
+}
+@media (max-width: 420px) {
+    .brand-link { width: 132px; min-width: 132px; }
+    .brand-logo { width: 132px; flex-basis: 132px; }
+}
 </style>

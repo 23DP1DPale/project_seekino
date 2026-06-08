@@ -230,59 +230,11 @@
 
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
-import { RouterLink } from 'vue-router'
-import { useAuth } from '@/services/auth'
-
-const drawer = ref(false)
-const { user, isAuthenticated, authLoading: navAuthLoading, logout } = useAuth()
 const searchQuery = ref('')
 const selectedGenre = ref('Visi')
 const selectedAgeRating = ref('Visi')
 const selectedMaxPrice = ref(0)
 const sortBy = ref('Reitings')
-const authDialog = ref(false)
-const authMode = ref('login')
-const authLoading = ref(false)
-const authError = ref('')
-const authSuccess = ref('')
-const loginForm = ref({ email: '', password: '' })
-const registerForm = ref({ name: '', email: '', password: '', confirmPassword: '' })
-
-const menuGroups = [
-    {
-        title: 'Kino',
-        items: [
-            { title: 'Sākums', icon: 'mdi-home-variant-outline', to: '/' },
-            { title: 'Filmas', icon: 'mdi-movie-open-outline', to: '/filmas' },
-            { title: 'Seansi', icon: 'mdi-calendar-clock-outline', to: '/seansi' },
-        ],
-    },
-    {
-        title: 'Lietotājs',
-        isLast: true,
-        items: [
-            { title: 'Mans profils', icon: 'mdi-account-outline', to: '/profile' },
-            { title: 'Manas rezervācijas', icon: 'mdi-ticket-confirmation-outline', to: '/profile' },
-            { title: 'Kontakti', icon: 'mdi-phone-outline', to: '/kontakti' },
-        ],
-    },
-]
-
-const footerNavLinks = [
-    { title: 'Sākums', to: '/' },
-    { title: 'Filmas', to: '/filmas' },
-    { title: 'Seansi', to: '/seansi' },
-    { title: 'Kontakti', to: '/kontakti' },
-]
-const footerUserLinks = [
-    { title: 'Mans profils', to: '/profile' },
-    { title: 'Rezervācijas', to: '/profile' },
-    { title: 'Atbalsts' },
-    { title: 'Privātuma politika' },
-]
-
-const socialIcons = ['mdi-facebook', 'mdi-instagram', 'mdi-youtube', 'mdi-twitter']
-
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'
 const defaultMoviePoster = 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=1000&q=80'
 const movies = ref([])
@@ -384,7 +336,6 @@ const fetchMovies = async () => {
 onMounted(fetchMovies)
 
 const genreOptions = computed(() => ['Visi', ...new Set(movies.value.map((movie) => movie.genre).filter(Boolean))])
-const quickGenres = computed(() => genreOptions.value.filter((genre) => genre !== 'Visi').slice(0, 4))
 const maxMoviePrice = computed(() => {
     const prices = movies.value
         .map((movie) => movie.price)
@@ -476,72 +427,6 @@ const activeFilters = computed(() => {
 })
 const hasActiveFilters = computed(() => activeFilters.value.length > 0)
 
-const isEmailValid = (value) => /^\S+@\S+\.\S+$/.test(value)
-
-const openAuth = (mode = 'login') => {
-    authMode.value = mode
-    authDialog.value = true
-    authError.value = ''
-    authSuccess.value = ''
-}
-
-const closeAuth = () => {
-    authDialog.value = false
-    authLoading.value = false
-}
-
-const switchAuth = (mode) => {
-    authMode.value = mode
-    authError.value = ''
-    authSuccess.value = ''
-}
-
-const submitAuth = async () => {
-    authError.value = ''
-    authSuccess.value = ''
-
-    if (authMode.value === 'login') {
-        if (!loginForm.value.email || !loginForm.value.password) {
-            authError.value = 'Lūdzu aizpildi e-pastu un paroli.'
-            return
-        }
-        if (!isEmailValid(loginForm.value.email)) {
-            authError.value = 'E-pasta adrese nav pareiza.'
-            return
-        }
-    } else {
-        if (
-            !registerForm.value.name ||
-            !registerForm.value.email ||
-            !registerForm.value.password ||
-            !registerForm.value.confirmPassword
-        ) {
-            authError.value = 'Lūdzu aizpildi visus reģistrācijas laukus.'
-            return
-        }
-        if (!isEmailValid(registerForm.value.email)) {
-            authError.value = 'E-pasta adrese nav pareiza.'
-            return
-        }
-        if (registerForm.value.password.length < 6) {
-            authError.value = 'Parolei jābūt vismaz 6 simbolus garai.'
-            return
-        }
-        if (registerForm.value.password !== registerForm.value.confirmPassword) {
-            authError.value = 'Paroles nesakrīt.'
-            return
-        }
-    }
-
-    authLoading.value = true
-    await new Promise((resolve) => setTimeout(resolve, 500))
-    authLoading.value = false
-    authSuccess.value =
-        authMode.value === 'login'
-            ? 'Pieslēgšanās forma gatava. Nākamais solis: savienot ar Laravel API.'
-            : 'Reģistrācijas forma gatava. Nākamais solis: savienot ar Laravel API.'
-}
-
 const resetFilters = () => {
     searchQuery.value = ''
     selectedGenre.value = 'Visi'
@@ -573,21 +458,6 @@ const removeFilter = (key) => {
 
 .main-content {
     padding-top: 0;
-}
-
-.auth-switch-enter-active,
-.auth-switch-leave-active {
-    transition: opacity 0.24s ease, transform 0.24s ease;
-}
-
-.auth-switch-enter-from {
-    opacity: 0;
-    transform: translateY(8px);
-}
-
-.auth-switch-leave-to {
-    opacity: 0;
-    transform: translateY(-8px);
 }
 
 .hero-section {

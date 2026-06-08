@@ -186,51 +186,6 @@
 
 <script setup>
 import { computed, onMounted, ref } from 'vue'
-import { RouterLink } from 'vue-router'
-import { useAuth } from '@/services/auth'
-
-const drawer = ref(false)
-const { user, isAuthenticated, authLoading: navAuthLoading, logout } = useAuth()
-const authDialog = ref(false)
-const authMode = ref('login')
-const authLoading = ref(false)
-const authError = ref('')
-const authSuccess = ref('')
-const loginForm = ref({ email: '', password: '' })
-const registerForm = ref({ name: '', email: '', password: '', confirmPassword: '' })
-const menuGroups = [
-    {
-        title: 'Kino',
-        items: [
-            { title: 'Sākums', icon: 'mdi-home-variant-outline', to: '/' },
-            { title: 'Filmas', icon: 'mdi-movie-open-outline', to: '/filmas' },
-            { title: 'Seansi', icon: 'mdi-calendar-clock-outline', to: '/seansi' },
-        ],
-    },
-    {
-        title: 'Lietotājs',
-        isLast: true,
-        items: [
-            { title: 'Mans profils', icon: 'mdi-account-outline', to: '/profile' },
-            { title: 'Manas rezervācijas', icon: 'mdi-ticket-confirmation-outline', to: '/profile' },
-            { title: 'Kontakti', icon: 'mdi-phone-outline', to: '/kontakti' },
-        ],
-    },
-]
-const footerNavLinks = [
-    { title: 'Sākums', to: '/' },
-    { title: 'Filmas', to: '/filmas' },
-    { title: 'Seansi', to: '/seansi' },
-    { title: 'Kontakti', to: '/kontakti' },
-]
-const footerUserLinks = [
-    { title: 'Mans profils', to: '/profile' },
-    { title: 'Rezervācijas', to: '/profile' },
-    { title: 'Atbalsts' },
-    { title: 'Privātuma politika' },
-]
-const socialIcons = ['mdi-facebook', 'mdi-instagram', 'mdi-youtube', 'mdi-twitter']
-
 const movies = ref([])
 const moviesLoading = ref(false)
 const moviesError = ref('')
@@ -294,6 +249,7 @@ const formatScreeningDate = (value) => {
 const formatScreeningTime = (value) => String(value || 'Laiks nav norādīts').slice(0, 5)
 const formatScreeningPrice = (value) => `${Number(value || 0).toFixed(2)} €`
 
+// Backend dažos endpointos atgriež masīvu pa tiešo, citos ieliek to data vai screenings laukā.
 const extractScreenings = (payload) => {
     if (Array.isArray(payload)) {
         return payload
@@ -372,72 +328,6 @@ const fetchUpcomingShows = async () => {
     }
 }
 
-const isEmailValid = (value) => /^\S+@\S+\.\S+$/.test(value)
-
-const openAuth = (mode = 'login') => {
-    authMode.value = mode
-    authDialog.value = true
-    authError.value = ''
-    authSuccess.value = ''
-}
-
-const closeAuth = () => {
-    authDialog.value = false
-    authLoading.value = false
-}
-
-const switchAuth = (mode) => {
-    authMode.value = mode
-    authError.value = ''
-    authSuccess.value = ''
-}
-
-const submitAuth = async () => {
-    authError.value = ''
-    authSuccess.value = ''
-
-    if (authMode.value === 'login') {
-        if (!loginForm.value.email || !loginForm.value.password) {
-            authError.value = 'Lūdzu aizpildi e-pastu un paroli.'
-            return
-        }
-        if (!isEmailValid(loginForm.value.email)) {
-            authError.value = 'E-pasta adrese nav pareiza.'
-            return
-        }
-    } else {
-        if (
-            !registerForm.value.name ||
-            !registerForm.value.email ||
-            !registerForm.value.password ||
-            !registerForm.value.confirmPassword
-        ) {
-            authError.value = 'Lūdzu aizpildi visus reģistrācijas laukus.'
-            return
-        }
-        if (!isEmailValid(registerForm.value.email)) {
-            authError.value = 'E-pasta adrese nav pareiza.'
-            return
-        }
-        if (registerForm.value.password.length < 6) {
-            authError.value = 'Parolei jābūt vismaz 6 simbolus garai.'
-            return
-        }
-        if (registerForm.value.password !== registerForm.value.confirmPassword) {
-            authError.value = 'Paroles nesakrīt.'
-            return
-        }
-    }
-
-    authLoading.value = true
-    await new Promise((resolve) => setTimeout(resolve, 500))
-    authLoading.value = false
-    authSuccess.value =
-        authMode.value === 'login'
-            ? 'Pieslēgšanās forma gatava. Nākamais solis: savienot ar Laravel API.'
-            : 'Reģistrācijas forma gatava. Nākamais solis: savienot ar Laravel API.'
-}
-
 onMounted(() => {
     fetchPopularMovies()
     fetchUpcomingShows()
@@ -458,21 +348,6 @@ onMounted(() => {
 
 .main-content {
     padding-top: 0;
-}
-
-.auth-switch-enter-active,
-.auth-switch-leave-active {
-    transition: opacity 0.24s ease, transform 0.24s ease;
-}
-
-.auth-switch-enter-from {
-    opacity: 0;
-    transform: translateY(8px);
-}
-
-.auth-switch-leave-to {
-    opacity: 0;
-    transform: translateY(-8px);
 }
 
 .hero-section {

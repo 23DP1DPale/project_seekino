@@ -28,8 +28,6 @@ class AdminScreeningController extends Controller
             ->orderBy('screening_date')
             ->orderBy('screening_time')
             ->get();
-
-        // Pēc noklusējuma admin sarakstā rāda tikai nākotnes seansus.
         if (! $request->boolean('include_past')) {
             $screenings = $screenings
                 ->filter(fn (Screening $screening): bool => $this->isFutureScreening($screening))
@@ -125,8 +123,6 @@ class AdminScreeningController extends Controller
         if ($admin instanceof JsonResponse) {
             return $admin;
         }
-
-        // Dzēšot seansu, kopā jānotīra arī rezervāciju un biļešu ieraksti.
         DB::transaction(function () use ($screening): void {
             $reservationIds = DB::table('reservations')
                 ->where('screening', $screening->id)
@@ -218,7 +214,6 @@ class AdminScreeningController extends Controller
 
     private function addScheduleValidation($validator, ?Screening $currentScreening = null): void
     {
-        // Papildu validācija nepieļauj divus seansus vienā zālē vienā datumā un laikā.
         $validator->after(function ($validator) use ($currentScreening): void {
             if ($validator->errors()->isNotEmpty()) {
                 return;

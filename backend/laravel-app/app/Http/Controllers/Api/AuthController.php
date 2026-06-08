@@ -134,8 +134,6 @@ class AuthController extends Controller
         }
 
         $user = $apiToken->user;
-
-        // E-pasts drīkst sakrist ar esošo tikai tad, ja tas pieder šim pašam lietotājam.
         $validator = Validator::make($request->all(), [
             'nickname' => ['required', 'string', 'max:50'],
             'email' => ['required', 'string', 'email', 'max:100', Rule::unique('users', 'email')->ignore($user->id)],
@@ -160,7 +158,7 @@ class AuthController extends Controller
 
     private function createToken(User $user): string
     {
-        // Plain tokenu atgriežam klientam tikai vienreiz; datubāzē glabājas tikai hash.
+        // Lietotājs saņem pilno tokenu, bet datubāzē glabājam tikai hash vērtību.
         $plainToken = Str::random(80);
 
         ApiToken::create([
@@ -180,7 +178,6 @@ class AuthController extends Controller
 
     private function findApiToken(string $plainToken): ?ApiToken
     {
-        // Ienākošo bearer tokenu hashojam un salīdzinām ar datubāzē saglabāto vērtību.
         return ApiToken::query()
             ->with('user')
             ->where('token_hash', hash('sha256', $plainToken))
